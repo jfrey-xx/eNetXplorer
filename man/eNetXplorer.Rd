@@ -88,6 +88,10 @@ An object with S3 class \code{"eNetXplorer"}.
 }
 \author{Julian Candia and John S. Tsang\cr 
 Maintainer: Julian Candia \email{julian.candia@nih.gov}}
+\references{Candia J and Tsang JS (2018)
+  \emph{eNetXplorer: an R package for the quantitative exploration of elastic net families 
+  for generalized linear models}, bioRxiv 305870 (under review).
+}
 \seealso{\code{\link{summary}}, \code{\link{plot}}, \code{\link{summaryPDF}}, \code{\link{export}}
 }
 \examples{

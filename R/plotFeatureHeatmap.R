@@ -28,7 +28,7 @@ line.subtitle1=-1,cex.subtitle1=0.65, subtitle2=NULL, col.subtitle2="darkgray",l
         for (i_alpha in alpha.index) {
             if (stat=="freq") {
                 feature_heatmap = as.matrix(x$feature_freq_mean)
-                pval = x$feature_freq_model_vs_null_pval
+                pval = as.matrix(x$feature_freq_model_vs_null_pval)
                 main.def = "frequencies"
                 notecol = notecol.freq
                 if (x$family=="binomial") {
@@ -36,7 +36,7 @@ line.subtitle1=-1,cex.subtitle1=0.65, subtitle2=NULL, col.subtitle2="darkgray",l
                 }
             } else if (stat=="coef") {
                 feature_heatmap = as.matrix(x$feature_coef_wmean)
-                pval = x$feature_coef_model_vs_null_pval
+                pval = as.matrix(x$feature_coef_model_vs_null_pval)
                 main.def = "coefficients"
                 notecol = notecol.coef
                 if (x$family=="binomial") {
@@ -100,7 +100,6 @@ line.subtitle1=-1,cex.subtitle1=0.65, subtitle2=NULL, col.subtitle2="darkgray",l
                     cexRow = min(1.6/log(n_feature),0.5)
                 }
                 if (signif.code) {
-                    x$feature_coef_model_vs_null_pval[o,]
                     annot = matrix(rep("",n_feature*n_alpha),ncol=n_alpha)
                     annot[which(pval[o,]<0.1,arr.ind=T)] = "."
                     annot[which(pval[o,]<0.05,arr.ind=T)] = "*"

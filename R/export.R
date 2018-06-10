@@ -94,6 +94,16 @@ export <- function (x, path, delim=c("tab","csv"), input.data=T, summary.data=T,
             output = rbind(c("feature",paste0("a",x$alpha)),cbind(x$feature,as.matrix(x$null_feature_freq_sd)))
             write(t(output),ncolumns=ncol(output),file=paste0(root_str,"null_feature_freq_sd.",ext),sep=sep)
             
+            output = rbind(c("feature",paste0("a",x$alpha)),cbind(x$feature,
+            as.matrix(x$feature_coef_model_vs_null_pval)))
+            write(t(output),ncolumns=ncol(output),
+            file=paste0(root_str,"feature_coef_model_vs_null_pval.",ext),sep=sep)
+            
+            output = rbind(c("feature",paste0("a",x$alpha)),cbind(x$feature,
+            as.matrix(x$feature_freq_model_vs_null_pval)))
+            write(t(output),ncolumns=ncol(output),
+            file=paste0(root_str,"feature_freq_model_vs_null_pval.",ext),sep=sep)
+            
         } else if (x$family=="multinomial") {
             
             class = levels(x$response)
@@ -158,6 +168,22 @@ export <- function (x, path, delim=c("tab","csv"), input.data=T, summary.data=T,
             }
             output = rbind(header,cbind(x$feature,tmp))
             write(t(output),ncolumns=ncol(output),file=paste0(root_str,"null_feature_freq_sd.",ext),sep=sep)
+            
+            tmp = NULL
+            for (i_class in 1:n_class) {
+                tmp = cbind(tmp,as.matrix(x$feature_coef_model_vs_null_pval[[i_class]]))
+            }
+            output = rbind(header,cbind(x$feature,tmp))
+            write(t(output),ncolumns=ncol(output),
+            file=paste0(root_str,"feature_coef_model_vs_null_pval.",ext),sep=sep)
+            
+            tmp = NULL
+            for (i_class in 1:n_class) {
+                tmp = cbind(tmp,as.matrix(x$feature_freq_model_vs_null_pval[[i_class]]))
+            }
+            output = rbind(header,cbind(x$feature,tmp))
+            write(t(output),ncolumns=ncol(output),
+            file=paste0(root_str,"feature_freq_model_vs_null_pval.",ext),sep=sep)
             
         }
     }

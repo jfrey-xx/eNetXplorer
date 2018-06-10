@@ -1,0 +1,5 @@
+2018-06-10 Julian Candia <julian.candia@nih.gov> version 1.0.1
+	* added export option for p-value tables 
+	* added progress bar during computation of model predictions
+        * updated references
+        * fixed bug in plot feature heatmap code (issue with sparse pval matrix).

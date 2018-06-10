@@ -138,12 +138,15 @@ n_fold, n_run, n_perm_null, QF.FUN, QF_label, fold_distrib_fail.max, ...)
             }
             pb$tick()
         }
-        
+        pb <- progress_bar$new(
+        format = paste0("  MODEL predictions for alpha = ",alpha[i_alpha]," [:bar] :percent in :elapsed"),
+        total = n_lambda, clear = T, width= 60)
         lambda_QF_est_all_runs = matrix(rep(NA,n_lambda*n_run),ncol=n_run)
         for (i_lambda in 1:n_lambda) {
             for (i_run in 1:n_run) {
                 lambda_QF_est_all_runs[i_lambda,i_run] = QF(predicted_values_all_lambda[(1:n_instance)+(i_run-1)*n_instance,i_lambda],y)
             }
+            pb$tick()
         }
         lambda_QF_est[[i_alpha]] = apply(lambda_QF_est_all_runs,1,median)
         best_lambda_index = which.max(lambda_QF_est[[i_alpha]])

@@ -38,7 +38,7 @@ suppressWarnings(plotSummary(x=fit,show.pval.ref=FALSE))
 data(QuickStartEx)
 fit = eNetXplorer(x=QuickStartEx$predictor,y=QuickStartEx$response,
 family="gaussian",n_run=20,n_perm_null=10,seed=111)
-suppressWarnings(plot(x=fit, plot.type="summary"))
-suppressWarnings(plotSummary(x=fit,show.pval.ref=FALSE))
+plot(x=fit, plot.type="summary")
+plotSummary(x=fit,show.pval.ref=FALSE)
 }
 }

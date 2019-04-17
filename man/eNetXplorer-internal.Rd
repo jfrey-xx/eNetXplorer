@@ -15,10 +15,12 @@ eNetXplorerGaussian(x, y, family, alpha, nlambda, nlambda.ext, seed, scaled,
 n_fold, n_run, n_perm_null, QF.FUN, QF_label, cor_method, \dots)
 
 eNetXplorerBinomial(x, y, family, alpha, nlambda, nlambda.ext, seed, scaled,
-n_fold, n_run, n_perm_null, QF.FUN, QF_label, fold_distrib_fail.max, \dots)
+n_fold, n_run, n_perm_null, QF.FUN, QF_label, binom_method, binom_pos, fscore_beta,
+fold_distrib_fail.max, \dots)
 
 eNetXplorerMultinomial(x, y, family, alpha, nlambda, nlambda.ext, seed, scaled,
-n_fold, n_run, n_perm_null, QF.FUN, QF_label, fold_distrib_fail.max, \dots)
+n_fold, n_run, n_perm_null, QF.FUN, QF_label, multinom_method, fscore_beta, 
+fold_distrib_fail.max, \dots)
 
 plotMeasuredVsOOBNumer <- function (x, alpha.index, xlab, ylab, cex.lab, main, 
 col.main, cex.main, instance.label, instance.label.cex, instance.label.offset,

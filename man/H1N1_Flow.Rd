@@ -1,7 +1,7 @@
 \name{H1N1_Flow}
 \alias{H1N1_Flow}
 \docType{data}
-\title{Longitudinal cell population frequencies and titer response upon H1N1 vaccination}
+\title{longitudinal cell population frequencies and titer response upon H1N1 vaccination}
 \description{
 Data from a cohort of healthy subjects vaccinated against influenza virus H1N1. Cell population frequencies from deep-phenotyping flow cytometry were determined longitudinally pre- (days -7, 0) and post-vaccination (days 1, 7, 70). The response is the adjusted maximum fold change (adjMFC) of serum titers at day 70 relative to baseline, as defined in Tsang et al (2014). 
 }
@@ -22,9 +22,9 @@ Data adjustment: data were log10-transformed and pooled across all timepoints, t
 For more details, see Tsang et al (2014).
 }
 
-\references{Tsang JS et al (2014)
+\references{Tsang JS et al.
   \emph{Global Analyses of Human Immune Variation Reveal Baseline Predictors of Postvaccination Responses},
-  Cell 157: 499-513.\cr
+  Cell (2014) 157: 499-513.\cr
 }
 
 \keyword{datasets}

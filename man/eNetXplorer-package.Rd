@@ -9,8 +9,8 @@ Provides a quantitative toolkit to explore elastic net families and to uncover c
 \tabular{ll}{
 Package: \tab eNetXplorer\cr
 Type: \tab Package\cr
-Version: \tab 1.0.1\cr
-Date: \tab 2018-06-10\cr
+Version: \tab 1.0.2\cr
+Date: \tab 2019-04-16\cr
 License: \tab GPL-3\cr
 }
 This package provides a full pipeline of analysis: 
@@ -21,9 +21,9 @@ processing.
 }
 \author{Julian Candia and John S. Tsang\cr 
 Maintainer: Julian Candia \email{julian.candia@nih.gov}}
-\references{Candia J and Tsang JS (2018)
+\references{Candia J and Tsang JS.
   \emph{eNetXplorer: an R package for the quantitative exploration of elastic net families 
-  for generalized linear models}, bioRxiv 305870 (under review).
+  for generalized linear models}, BMC Bioinformatics (2019) 20:189.
 }
 \keyword{ package }
 \seealso{
@@ -36,7 +36,7 @@ fit = eNetXplorer(x=QuickStartEx$predictor,y=QuickStartEx$response,
 family="gaussian",n_run=20,n_perm_null=10,seed=111)
 summary(fit)
 plot(x=fit,plot.type="measuredVsOOB",alpha.index=4)
-suppressWarnings(summaryPDF(x=fit,path=tempdir()))
+summaryPDF(x=fit,path=tempdir())
 export(x=fit,path=tempdir())
 }
 }

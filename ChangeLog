@@ -1,5 +1,15 @@
+2019-04-16 Julian Candia <julian.candia@nih.gov> version 1.0.2
+	* expanded built-in quality function options for binomial and multinomial models.
+        * expanded the Leukemia_miR.RData dataset to include both full and filtered datasets (to ensure data provenance and reproducibility).
+        * added error-catching functions, so that if an error happens, results for completed alphas are returned. 
+        * added n_lambda_eff to deal with glmnet convergence issues (where glmnet would return solutions for a subset of lambdas).
+        * added suppressWarnings() call around arrows() in plotFeatureCaterpillar.R and plotFeatureCaterpillarMultinom.R 
+        * added vignette.
+        * updated man pages.
+        * updated citation.     
+
 2018-06-10 Julian Candia <julian.candia@nih.gov> version 1.0.1
-	* added export option for p-value tables 
-	* added progress bar during computation of model predictions
-        * updated references
+	* added export option for p-value tables. 
+	* added progress bar during computation of model predictions.
+        * updated references.
         * fixed bug in plot feature heatmap code (issue with sparse pval matrix).

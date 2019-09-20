@@ -173,34 +173,34 @@ n_fold, n_run, n_perm_null, QF.FUN, QF_label, multinom_method, fscore_beta, fold
         names(feature_freq_model_vs_null_pval) = class
         # conversion from list of matrices to list of sparse matrices
         for (i_class in 1:n_class) {
-            feature_coef_wmean[[i_class]] = as(feature_coef_wmean[[i_class]][,1:n_alpha_eff],"CsparseMatrix")
+            feature_coef_wmean[[i_class]] = as(feature_coef_wmean[[i_class]][,1:n_alpha_eff,drop=F],"CsparseMatrix")
             rownames(feature_coef_wmean[[i_class]]) = feature
             colnames(feature_coef_wmean[[i_class]]) = alpha_label
-            feature_coef_wsd[[i_class]] = as(feature_coef_wsd[[i_class]][,1:n_alpha_eff],"CsparseMatrix")
+            feature_coef_wsd[[i_class]] = as(feature_coef_wsd[[i_class]][,1:n_alpha_eff,drop=F],"CsparseMatrix")
             rownames(feature_coef_wsd[[i_class]]) = feature
             colnames(feature_coef_wsd[[i_class]]) = alpha_label
-            feature_freq_mean[[i_class]] = as(feature_freq_mean[[i_class]][,1:n_alpha_eff],"CsparseMatrix")
+            feature_freq_mean[[i_class]] = as(feature_freq_mean[[i_class]][,1:n_alpha_eff,drop=F],"CsparseMatrix")
             rownames(feature_freq_mean[[i_class]]) = feature
             colnames(feature_freq_mean[[i_class]]) = alpha_label
-            feature_freq_sd[[i_class]] = as(feature_freq_sd[[i_class]][,1:n_alpha_eff],"CsparseMatrix")
+            feature_freq_sd[[i_class]] = as(feature_freq_sd[[i_class]][,1:n_alpha_eff,drop=F],"CsparseMatrix")
             rownames(feature_freq_sd[[i_class]]) = feature
             colnames(feature_freq_sd[[i_class]]) = alpha_label
-            null_feature_coef_wmean[[i_class]] = as(null_feature_coef_wmean[[i_class]][,1:n_alpha_eff],"CsparseMatrix")
+            null_feature_coef_wmean[[i_class]] = as(null_feature_coef_wmean[[i_class]][,1:n_alpha_eff,drop=F],"CsparseMatrix")
             rownames(null_feature_coef_wmean[[i_class]]) = feature
             colnames(null_feature_coef_wmean[[i_class]]) = alpha_label
-            null_feature_coef_wsd[[i_class]] = as(null_feature_coef_wsd[[i_class]][,1:n_alpha_eff],"CsparseMatrix")
+            null_feature_coef_wsd[[i_class]] = as(null_feature_coef_wsd[[i_class]][,1:n_alpha_eff,drop=F],"CsparseMatrix")
             rownames(null_feature_coef_wsd[[i_class]]) = feature
             colnames(null_feature_coef_wsd[[i_class]]) = alpha_label
-            null_feature_freq_mean[[i_class]] = as(null_feature_freq_mean[[i_class]][,1:n_alpha_eff],"CsparseMatrix")
+            null_feature_freq_mean[[i_class]] = as(null_feature_freq_mean[[i_class]][,1:n_alpha_eff,drop=F],"CsparseMatrix")
             rownames(null_feature_freq_mean[[i_class]]) = feature
             colnames(null_feature_freq_mean[[i_class]]) = alpha_label
-            null_feature_freq_sd[[i_class]] = as(null_feature_freq_sd[[i_class]][,1:n_alpha_eff],"CsparseMatrix")
+            null_feature_freq_sd[[i_class]] = as(null_feature_freq_sd[[i_class]][,1:n_alpha_eff,drop=F],"CsparseMatrix")
             rownames(null_feature_freq_sd[[i_class]]) = feature
             colnames(null_feature_freq_sd[[i_class]]) = alpha_label
-            feature_coef_model_vs_null_pval[[i_class]] = as(feature_coef_model_vs_null_pval[[i_class]][,1:n_alpha_eff],"CsparseMatrix")
+            feature_coef_model_vs_null_pval[[i_class]] = as(feature_coef_model_vs_null_pval[[i_class]][,1:n_alpha_eff,drop=F],"CsparseMatrix")
             rownames(feature_coef_model_vs_null_pval[[i_class]]) = feature
             colnames(feature_coef_model_vs_null_pval[[i_class]]) = alpha_label
-            feature_freq_model_vs_null_pval[[i_class]] = as(feature_freq_model_vs_null_pval[[i_class]][,1:n_alpha_eff],"CsparseMatrix")
+            feature_freq_model_vs_null_pval[[i_class]] = as(feature_freq_model_vs_null_pval[[i_class]][,1:n_alpha_eff,drop=F],"CsparseMatrix")
             rownames(feature_freq_model_vs_null_pval[[i_class]]) = feature
             colnames(feature_freq_model_vs_null_pval[[i_class]]) = alpha_label
         }
@@ -208,10 +208,10 @@ n_fold, n_run, n_perm_null, QF.FUN, QF_label, multinom_method, fscore_beta, fold
         # input data and parameters
         predictor = as(x,"CsparseMatrix"), response = y, alpha = alpha[1:n_alpha_eff], family = family, nlambda = nlambda,
         nlambda.ext = nlambda.ext, seed = seed, scaled = scaled, n_fold = n_fold, n_run = n_run,
-        n_perm_null = n_perm_null, QF_label = QF_label, multinom_method = multinom_method,
-        fscore_beta = fscore_beta,
-        instance = instance,
-        feature = feature, fold_distrib_fail.max = fold_distrib_fail.max, glmnet_params = glmnet.control(),
+        n_perm_null = n_perm_null, QF_label = QF_label,
+        multinom_method = multinom_method,
+        fscore_beta = fscore_beta, instance = instance, feature = feature,
+        fold_distrib_fail.max = fold_distrib_fail.max, glmnet_params = glmnet.control(),
         # summary results
         best_lambda = best_lambda, model_QF_est = model_QF_est, QF_model_vs_null_pval = QF_model_vs_null_pval,
         # detailed results for plots and downstream analysis
@@ -391,8 +391,14 @@ n_fold, n_run, n_perm_null, QF.FUN, QF_label, multinom_method, fscore_beta, fold
             }
             
             # Comparisons of model vs null
-            n_tail = sum(sapply(seq_along(lambda_QF_est_all_runs[best_lambda_index,]), function(x, y, i) x[i, ]>y[i], y = lambda_QF_est_all_runs[best_lambda_index,] ,x = null_QF_est_all_runs))
-            QF_model_vs_null_pval[i_alpha] = (n_tail+1)/(n_run*n_perm_null+1) # correction based on Phipson & Smyth (2010)
+            n_tail = 0
+            n_tot = 0
+            for (i_run in 1:n_run) {
+                null_above_model = null_QF_est_all_runs[i_run,]>lambda_QF_est_all_runs[best_lambda_index,i_run]
+                n_tail = n_tail + sum(null_above_model,na.rm=T)
+                n_tot = n_tot + sum(!is.na(null_above_model))
+            }
+            QF_model_vs_null_pval[i_alpha] = (n_tail+1)/(n_tot+1) # correction based on Phipson & Smyth (2010)
             
             for (i_class in 1:n_class) {
                 for (i_feature in 1:n_feature) {

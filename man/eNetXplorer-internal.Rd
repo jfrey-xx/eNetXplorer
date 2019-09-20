@@ -22,6 +22,9 @@ eNetXplorerMultinomial(x, y, family, alpha, nlambda, nlambda.ext, seed, scaled,
 n_fold, n_run, n_perm_null, QF.FUN, QF_label, multinom_method, fscore_beta, 
 fold_distrib_fail.max, \dots)
 
+eNetXplorerCox <- function(x, y, family, alpha, nlambda, nlambda.ext, seed, scaled,
+n_fold, n_run, n_perm_null, QF.FUN, QF_label, cox_index, \dots)
+
 plotMeasuredVsOOBNumer <- function (x, alpha.index, xlab, ylab, cex.lab, main, 
 col.main, cex.main, instance.label, instance.label.cex, instance.label.offset,
 instance.label.added.margin, col, \dots)
@@ -45,8 +48,8 @@ col.subtitle2, line.subtitle2, cex.subtitle2, \dots)
 \author{Julian Candia and John S. Tsang\cr 
 Maintainer: Julian Candia \email{julian.candia@nih.gov}}
 \details{These functions are not part of the package application programming interface (API) and are not intended for use by end users. Functions 
-\code{eNetXplorerGaussian}, \code{eNetXplorerBinomial} and \code{eNetXplorerMultinomial} are called by function \code{eNetXplorer} to run models of 
-type linear, binomial and multinomial, respectively. Functions \code{plotMeasuredVsOOBNumer} and \code{plotMeasuredVsOOBCateg} are called by function \code{plotMeasuredVsOOB} to generate plots for linear and categorical models, respectively. For multinomial models, functions \code{plotFeatureCaterpillarMultinom} and \code{plotFeatureHeatmapMultinom} are called 
+\code{eNetXplorerGaussian}, \code{eNetXplorerBinomial}, \code{eNetXplorerMultinomial} and \code{eNetXplorerCox} are called by function \code{eNetXplorer} to run models of 
+type linear, binomial, multinomial and Cox, respectively. Functions \code{plotMeasuredVsOOBNumer} and \code{plotMeasuredVsOOBCateg} are called by function \code{plotMeasuredVsOOB} to generate plots for linear and categorical models, respectively. For multinomial models, functions \code{plotFeatureCaterpillarMultinom} and \code{plotFeatureHeatmapMultinom} are called 
 by functions \code{plotFeatureCaterpillar} and \code{plotFeatureHeatmap}, respectively.
 }
 \keyword{internal}

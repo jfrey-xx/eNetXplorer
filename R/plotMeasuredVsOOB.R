@@ -1,7 +1,7 @@
 plotMeasuredVsOOB <- function (
 x, alpha.index=NULL,
 xlab=NULL, ylab=NULL, cex.lab=0.95, main=NULL, col.main = "black", cex.main=0.85,
-instance.label=T,
+instance.label=TRUE,
 instance.label.cex=NULL, instance.label.offset=NULL,
 instance.label.added.margin=NULL, col=NULL, # numerical only
 transparency=NULL, jitter=NULL, cex.pt=NULL, class.color=NULL, # categorical only

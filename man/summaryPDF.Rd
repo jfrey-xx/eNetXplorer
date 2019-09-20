@@ -8,12 +8,13 @@ This function generates a PDF report that contains a plot of model performance a
 followed by plots showing detailed results for each value of \code{alpha}.
 }
 \usage{
-summaryPDF(x, path, filename="eNetXplorerSummary.pdf")
+summaryPDF(x, dest_dir=getwd(), dest_dir_create=TRUE, dest_file="eNetSummary.pdf")
 }
 \arguments{
   \item{x}{\code{eNetXplorer} object.}
-  \item{path}{Directory path for output PDF file.}
-  \item{filename}{Name for output PDF file.}
+  \item{dest_dir}{Destination directory. Default is the working directory.}
+\item{dest_dir_create}{Creates destination directory if it does not exist already. Default is \code{TRUE}.}
+  \item{dest_file}{Name for output PDF file.}
 }
 \author{Julian Candia and John S. Tsang\cr 
 Maintainer: Julian Candia \email{julian.candia@nih.gov}}
@@ -24,6 +25,6 @@ Maintainer: Julian Candia \email{julian.candia@nih.gov}}
 data(QuickStartEx)
 fit = eNetXplorer(x=QuickStartEx$predictor,y=QuickStartEx$response, 
 family="gaussian",n_run=20,n_perm_null=10,seed=111)
-summaryPDF(x=fit,path=tempdir())
+summaryPDF(x=fit,dest_dir=tempdir())
 }
 }

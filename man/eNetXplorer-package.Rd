@@ -3,14 +3,14 @@
 \docType{package}
 \title{explores elastic net families for generalized linear models}
 \description{
-Provides a quantitative toolkit to explore elastic net families and to uncover correlates contributing to prediction under a cross-validation framework. Fits linear, binomial (logistic) and multinomial models.
+Provides a quantitative toolkit to explore elastic net families and to uncover correlates contributing to prediction under a cross-validation framework. Fits linear, binomial (logistic), multinomial and Cox regression models.
 }
 \details{
 \tabular{ll}{
 Package: \tab eNetXplorer\cr
 Type: \tab Package\cr
-Version: \tab 1.0.2\cr
-Date: \tab 2019-04-16\cr
+Version: \tab 1.1.0\cr
+Date: \tab 2019-09-19\cr
 License: \tab GPL-3\cr
 }
 This package provides a full pipeline of analysis: 
@@ -36,7 +36,7 @@ fit = eNetXplorer(x=QuickStartEx$predictor,y=QuickStartEx$response,
 family="gaussian",n_run=20,n_perm_null=10,seed=111)
 summary(fit)
 plot(x=fit,plot.type="measuredVsOOB",alpha.index=4)
-summaryPDF(x=fit,path=tempdir())
-export(x=fit,path=tempdir())
+summaryPDF(x=fit,dest_dir=tempdir())
+export(x=fit,dest_dir=tempdir())
 }
 }

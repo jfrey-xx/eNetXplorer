@@ -95,34 +95,34 @@ n_fold, n_run, n_perm_null, QF.FUN, QF_label, cor_method, ...)
         names(lambda_values) = alpha_label
         lambda_QF_est = lambda_QF_est[1:n_alpha_eff]
         names(lambda_QF_est) = alpha_label
-        feature_coef_wmean = feature_coef_wmean[,1:n_alpha_eff]
+        feature_coef_wmean = feature_coef_wmean[,1:n_alpha_eff,drop=F]
         rownames(feature_coef_wmean) = feature
         colnames(feature_coef_wmean) = alpha_label
-        feature_coef_wsd = feature_coef_wsd[,1:n_alpha_eff]
+        feature_coef_wsd = feature_coef_wsd[,1:n_alpha_eff,drop=F]
         rownames(feature_coef_wsd) = feature
         colnames(feature_coef_wsd) = alpha_label
-        feature_freq_mean = feature_freq_mean[,1:n_alpha_eff]
+        feature_freq_mean = feature_freq_mean[,1:n_alpha_eff,drop=F]
         rownames(feature_freq_mean) = feature
         colnames(feature_freq_mean) = alpha_label
-        feature_freq_sd = feature_freq_sd[,1:n_alpha_eff]
+        feature_freq_sd = feature_freq_sd[,1:n_alpha_eff,drop=F]
         rownames(feature_freq_sd) = feature
         colnames(feature_freq_sd) = alpha_label
-        null_feature_coef_wmean = null_feature_coef_wmean[,1:n_alpha_eff]
+        null_feature_coef_wmean = null_feature_coef_wmean[,1:n_alpha_eff,drop=F]
         rownames(null_feature_coef_wmean) = feature
         colnames(null_feature_coef_wmean) = alpha_label
-        null_feature_coef_wsd = null_feature_coef_wsd[,1:n_alpha_eff]
+        null_feature_coef_wsd = null_feature_coef_wsd[,1:n_alpha_eff,drop=F]
         rownames(null_feature_coef_wsd) = feature
         colnames(null_feature_coef_wsd) = alpha_label
-        null_feature_freq_mean = null_feature_freq_mean[,1:n_alpha_eff]
+        null_feature_freq_mean = null_feature_freq_mean[,1:n_alpha_eff,drop=F]
         rownames(null_feature_freq_mean) = feature
         colnames(null_feature_freq_mean) = alpha_label
-        null_feature_freq_sd = null_feature_freq_sd[,1:n_alpha_eff]
+        null_feature_freq_sd = null_feature_freq_sd[,1:n_alpha_eff,drop=F]
         rownames(null_feature_freq_sd) = feature
         colnames(null_feature_freq_sd) = alpha_label
-        feature_coef_model_vs_null_pval = feature_coef_model_vs_null_pval[,1:n_alpha_eff]
+        feature_coef_model_vs_null_pval = feature_coef_model_vs_null_pval[,1:n_alpha_eff,drop=F]
         rownames(feature_coef_model_vs_null_pval) = feature
         colnames(feature_coef_model_vs_null_pval) = alpha_label
-        feature_freq_model_vs_null_pval = feature_freq_model_vs_null_pval[,1:n_alpha_eff]
+        feature_freq_model_vs_null_pval = feature_freq_model_vs_null_pval[,1:n_alpha_eff,drop=F]
         rownames(feature_freq_model_vs_null_pval) = feature
         colnames(feature_freq_model_vs_null_pval) = alpha_label
         predicted_values = predicted_values[1:n_alpha_eff]
@@ -136,7 +136,8 @@ n_fold, n_run, n_perm_null, QF.FUN, QF_label, cor_method, ...)
         # input data and parameters
         predictor = as(x,"CsparseMatrix"), response = y, alpha = alpha[1:n_alpha_eff], family = family, nlambda = nlambda,
         nlambda.ext = nlambda.ext, seed = seed, scaled = scaled, n_fold = n_fold, n_run = n_run,
-        n_perm_null = n_perm_null, QF_label = QF_label, cor_method = cor_method, instance = instance,
+        n_perm_null = n_perm_null,
+        QF_label = QF_label, cor_method = cor_method, instance = instance,
         feature = feature, glmnet_params = glmnet.control(),
         # summary results
         best_lambda = best_lambda, model_QF_est = model_QF_est, QF_model_vs_null_pval = QF_model_vs_null_pval,
@@ -266,8 +267,14 @@ n_fold, n_run, n_perm_null, QF.FUN, QF_label, cor_method, ...)
             null_feature_freq_sd[,i_alpha] = apply(null_feature_freq,1,sd)
             
             # Comparisons of model vs null
-            n_tail = sum(sapply(seq_along(lambda_QF_est_all_runs[best_lambda_index,]), function(x, y, i) x[i, ]>y[i], y = lambda_QF_est_all_runs[best_lambda_index,] ,x = null_QF_est_all_runs))
-            QF_model_vs_null_pval[i_alpha] = (n_tail+1)/(n_run*n_perm_null+1) # correction based on Phipson & Smyth (2010)
+            n_tail = 0
+            n_tot = 0
+            for (i_run in 1:n_run) {
+                null_above_model = null_QF_est_all_runs[i_run,]>lambda_QF_est_all_runs[best_lambda_index,i_run]
+                n_tail = n_tail + sum(null_above_model,na.rm=T)
+                n_tot = n_tot + sum(!is.na(null_above_model))
+            }
+            QF_model_vs_null_pval[i_alpha] = (n_tail+1)/(n_tot+1) # correction based on Phipson & Smyth (2010)
             
             for (i_feature in 1:n_feature) {
                 n_coef = 0

@@ -1,12 +1,12 @@
 export(eNetXplorer,print.eNetXplorer,
 summary.eNetXplorer,print.summary.eNetXplorer,
 plot.eNetXplorer,plotSummary,plotLambdaVsQF,plotMeasuredVsOOB,
-plotContingency,plotFeatureCaterpillar,plotFeatureHeatmap,
+plotContingency,plotFeatureCaterpillar,plotFeatureHeatmap,plotKaplanMeier,plotSurvROC,
 summaryPDF,export)
 
 exportClasses(eNetXplorer,summary.eNetXplorer)
 
-import(glmnet,stats,Matrix,RColorBrewer,calibrate,progress)
+import(glmnet,stats,Matrix,RColorBrewer,calibrate,progress,survival,survcomp,survivalROC)
 
 importFrom("graphics", "abline", "arrows", "axTicks", "axis",
              "boxplot", "lines", "mtext", "par", "plot", "points",

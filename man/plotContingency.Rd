@@ -10,7 +10,7 @@ true vs predicted contingency matrix across classes for a given \code{alpha}.
 plotContingency(x, alpha.index=NULL, xlab="class (true)", ylab="class (predicted)", 
 cex.lab=0.95, main=NULL, col.main="black", cex.main=0.85, cex.axis=1, 
 symbol.size.inches=0.5, bg.color="steelblue2", fg.color=NULL, margin=0.2, 
-frequency.label=T, frequency.label.cex=1, frequency.label.offset=0, \dots)
+frequency.label=TRUE, frequency.label.cex=1, frequency.label.offset=0, \dots)
 }
 \arguments{
   \item{x}{\code{eNetXplorer} object.}
@@ -26,7 +26,7 @@ frequency.label=T, frequency.label.cex=1, frequency.label.offset=0, \dots)
   \item{bg.color}{Symbol color.}
   \item{fg.color}{Color of symbol background.}
   \item{margin}{Margin size  to accomodate symbols.}
-  \item{frequency.label}{Logical to display class frequency labels. Default is TRUE.}
+  \item{frequency.label}{Logical to display class frequency labels. Default is \code{TRUE}.}
   \item{frequency.label.cex}{Size of class frequency labels.}
   \item{frequency.label.offset}{Offset of class frequency labels.}
   \item{\dots}{Additional plotting parameters.}

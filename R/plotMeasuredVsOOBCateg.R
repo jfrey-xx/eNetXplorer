@@ -10,7 +10,7 @@ transparency, jitter, cex.pt, class.color,
         xlab="response"
     }
     if (is.null(ylab)) {
-        ylab="out-of-bag predicted (accuracy)"
+        ylab="frequency of OOB correct predictions"
     }
     for (i_alpha in alpha.index) {
         accuracy = rep(NA,n_instance)

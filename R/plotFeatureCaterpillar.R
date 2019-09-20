@@ -1,9 +1,9 @@
 plotFeatureCaterpillar <- function (x, alpha.index=NULL, stat=c("freq","coef"),
-feature.all = F, feature.pval.thres = NULL, feature.set = NULL, feature.top.n = 25,
-signif.code = T, xlab=NULL, ylab=NULL,
+feature.all = FALSE, feature.pval.thres = NULL, feature.set = NULL, feature.top.n = 25,
+signif.code = TRUE, xlab=NULL, ylab=NULL,
 main = NULL, col.main = "black", cex.main=0.85, line=1.5,
 subtitle=NULL, col.subtitle="darkgray", line.subtitle=0.5, cex.subtitle=0.55,
- cexRow = NULL, cex.lab=0.95, legend=T,
+ cexRow = NULL, cex.lab=0.95, legend=TRUE,
 ...) {
     if (is.null(alpha.index)) {
         alpha.index = 1:length(x$alpha)

@@ -1,3 +1,12 @@
+2019-09-19 Julian Candia <julian.candia@nih.gov> version 1.1.0
+        * added Cox regression (family="cox").
+        * added BreastC_Surv.RData dataset for Cox regression.
+        * added plots specific to Cox regression: plotKaplanMeier, plotSurvROC.
+        * added functionality to save the eNetXplorer object.
+        * fixed y-axis label of plotMeasuredVsOOB for categorical models.
+        * improved handling of destination directory and file names in export.R and summaryPDF.R 
+        * updated and improved man pages.
+
 2019-04-16 Julian Candia <julian.candia@nih.gov> version 1.0.2
 	* expanded built-in quality function options for binomial and multinomial models.
         * expanded the Leukemia_miR.RData dataset to include both full and filtered datasets (to ensure data provenance and reproducibility).

@@ -1,5 +1,5 @@
 plotSummary <- function (
-x, show.pval.ref=T, main=NULL, col.main="black", cex.main=0.95, line=1,
+x, show.pval.ref=TRUE, main=NULL, col.main="black", cex.main=0.95, line=1,
 ...)
 {
     y1 = x$model_QF_est

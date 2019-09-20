@@ -1,6 +1,6 @@
-# Binomial model
-eNetXplorerBinomial <- function(x, y, family, alpha, nlambda, nlambda.ext, seed, scaled,
-n_fold, n_run, n_perm_null, QF.FUN, QF_label, binom_method, binom_pos, fscore_beta, fold_distrib_fail.max, ...)
+# Cox model
+eNetXplorerCox <- function(x, y, family, alpha, nlambda, nlambda.ext, seed, scaled,
+n_fold, n_run, n_perm_null, QF.FUN, QF_label, cox_index, logrank, survAUC, survAUC_time, survAUC_method, survAUC_lambda, survAUC_span, ...)
 {
     n_instance = nrow(x)
     n_feature = ncol(x)
@@ -12,61 +12,19 @@ n_fold, n_run, n_perm_null, QF.FUN, QF_label, binom_method, binom_pos, fscore_be
     if (is.null(feature)) {
         feature = paste0("Feat.",1:ncol(x))
     }
-    
-    if (!is.null(dim(y))&&(ncol(y)>1)) {
-        stop("Response must be a factor\n")
-    }
-    y <- as.factor(y) # to force y into a factor
-    class = levels(y)
-    n_class = length(class)
-    
-    prediction_type = "class"
+    prediction_type = "response"
     
     if (is.null(QF.FUN)) {
-        QF_label = binom_method
-        if (QF_label=="accuracy") {
+        if (cox_index=="concordance") {
             QF = function(predicted,response) {
-                return (sum(predicted==response)/n_instance)
+                return (concordance.index(x=predicted,surv.time=response[,"time"],surv.event=response[,"status"])$c.index)
             }
-        } else {
-            if (is.null(binom_pos)) {
-                binom_pos = class[1]
-            } else if (!binom_pos%in%class) {
-                stop("binom_pos must be a class from the response\n")
+            QF_label = "concordance index"
+        } else if (cox_index=="D-index") {
+            QF = function(predicted,response) {
+                return (D.index(x=predicted,surv.time=response[,"time"],surv.event=response[,"status"])$d.index)
             }
-            if (QF_label=="precision") {
-                QF = function(predicted,response) {
-                    return (sum((predicted==binom_pos)&(response==binom_pos))/sum(predicted==binom_pos))
-                }
-            } else if (QF_label=="recall") {
-                QF = function(predicted,response) {
-                    return (sum((predicted==binom_pos)&(response==binom_pos))/sum(response==binom_pos))
-                }
-            } else if (QF_label=="Fscore") {
-                if (is.null(fscore_beta)) {
-                    fscore_beta=1
-                }
-                QF = function(predicted,response) {
-                    tp = sum((predicted==binom_pos)&(response==binom_pos))
-                    fp = sum((predicted==binom_pos)&(!(response==binom_pos)))
-                    fn = sum((!(predicted==binom_pos))&(response==binom_pos))
-                    num = (fscore_beta**2+1)*tp
-                    den = num + fscore_beta**2*fn + fp
-                    return (num/den)
-                }
-            } else if (QF_label=="specificity") {
-                QF = function(predicted,response) {
-                    return (sum((!(predicted==binom_pos))&(!(response==binom_pos)))/sum(!(response==binom_pos)))
-                }
-            } else if (QF_label=="auc") {
-                QF = function(predicted,response) {
-                    tp = sum((predicted==binom_pos)&(response==binom_pos))
-                    fp = sum((predicted==binom_pos)&(!(response==binom_pos)))
-                    fn = sum((!(predicted==binom_pos))&(response==binom_pos))
-                    tn = n_instance - tp - fp - fn
-                    return (0.5*(tp/(tp+fn)+tn/(tn+fp)))
-                }
-            }
+            QF_label = "D-index"
         }
     } else {
         QF = QF.FUN
@@ -124,6 +82,29 @@ n_fold, n_run, n_perm_null, QF.FUN, QF_label, binom_method, binom_pos, fscore_be
     feature_coef_model_vs_null_pval = matrix(rep(NA,n_feature*n_alpha),ncol=n_alpha)
     feature_freq_model_vs_null_pval = matrix(rep(NA,n_feature*n_alpha),ncol=n_alpha)
     
+    # logrank
+    if (logrank) {
+        risk_group_template = rep(1,n_instance)
+        logrank_pval = rep(NA,n_alpha)
+    }
+    
+    # AUC
+    if (survAUC) {
+        if ((survAUC_method=="NNE")&is.null(survAUC_span)&is.null(survAUC_lambda)) {
+            survAUC_span = 0.25*n_instance^(-0.20) # default value suggested per "survivalROC" documentation
+        }
+        if (is.null(survAUC_time)) {
+            stop("Error: survAUC_time must be provided")
+        }
+        n_survAUC_time = length(survAUC_time)
+        AUC_mean = matrix(rep(NA,n_survAUC_time*n_alpha),ncol=n_alpha)
+        AUC_sd = matrix(rep(NA,n_survAUC_time*n_alpha),ncol=n_alpha)
+        AUC_perc05 = matrix(rep(NA,n_survAUC_time*n_alpha),ncol=n_alpha)
+        AUC_perc50 = matrix(rep(NA,n_survAUC_time*n_alpha),ncol=n_alpha)
+        AUC_perc95 = matrix(rep(NA,n_survAUC_time*n_alpha),ncol=n_alpha)
+        AUC_pval = matrix(rep(NA,n_survAUC_time*n_alpha),ncol=n_alpha)
+    }
+    
     glmnet.control(factory=T) # resets internal glmnet parameters
     glmnet.control(...) # to allow changes of factory default parameters in glmnet
     
@@ -131,7 +112,7 @@ n_fold, n_run, n_perm_null, QF.FUN, QF_label, binom_method, binom_pos, fscore_be
     return_obj <- function(n_alpha_eff) {
         rownames(x) = instance
         colnames(x) = feature
-        names(y) = instance
+        rownames(y) = instance
         alpha_label = paste0("a",alpha[1:n_alpha_eff])
         best_lambda = best_lambda[1:n_alpha_eff]
         names(best_lambda) = alpha_label
@@ -176,18 +157,42 @@ n_fold, n_run, n_perm_null, QF.FUN, QF_label, binom_method, binom_pos, fscore_be
         predicted_values = predicted_values[1:n_alpha_eff]
         names(predicted_values) = alpha_label
         for (i_alpha in 1:n_alpha_eff) {
-            colnames(predicted_values[[i_alpha]]) = class
+            colnames(predicted_values[[i_alpha]]) = c("median","mad")
             rownames(predicted_values[[i_alpha]]) = instance
         }
+        if (logrank) {
+            logrank_pval = logrank_pval[1:n_alpha_eff]
+            names(logrank_pval) = alpha_label
+        }
+        if (survAUC) {
+            AUC_mean = AUC_mean[,1:n_alpha_eff,drop=F]
+            rownames(AUC_mean) = survAUC_time
+            colnames(AUC_mean) = alpha_label
+            AUC_sd = AUC_sd[,1:n_alpha_eff,drop=F]
+            rownames(AUC_sd) = survAUC_time
+            colnames(AUC_sd) = alpha_label
+            AUC_perc05 = AUC_perc05[,1:n_alpha_eff,drop=F]
+            rownames(AUC_perc05) = survAUC_time
+            colnames(AUC_perc05) = alpha_label
+            AUC_perc50 = AUC_perc50[,1:n_alpha_eff,drop=F]
+            rownames(AUC_perc50) = survAUC_time
+            colnames(AUC_perc50) = alpha_label
+            AUC_perc95 = AUC_perc95[,1:n_alpha_eff,drop=F]
+            rownames(AUC_perc95) = survAUC_time
+            colnames(AUC_perc95) = alpha_label
+            AUC_pval = AUC_pval[,1:n_alpha_eff,drop=F]
+            rownames(AUC_pval) = survAUC_time
+            colnames(AUC_pval) = alpha_label
+        }
         
+        output =
         list(
         # input data and parameters
         predictor = as(x,"CsparseMatrix"), response = y, alpha = alpha[1:n_alpha_eff], family = family, nlambda = nlambda,
         nlambda.ext = nlambda.ext, seed = seed, scaled = scaled, n_fold = n_fold, n_run = n_run,
-        n_perm_null = n_perm_null, QF_label = QF_label,
-        binom_method = binom_method,
-        binom_pos = binom_pos, fscore_beta = fscore_beta, instance = instance,
-        feature = feature, fold_distrib_fail.max = fold_distrib_fail.max, glmnet_params = glmnet.control(),
+        n_perm_null = n_perm_null, QF_label = QF_label, cox_index = cox_index, logrank = logrank, survAUC = survAUC,
+        survAUC_time = survAUC_time, survAUC_method = survAUC_method, survAUC_lambda = survAUC_lambda, survAUC_span = survAUC_span, 
+        instance = instance, feature = feature, glmnet_params = glmnet.control(),
         # summary results
         best_lambda = best_lambda, model_QF_est = model_QF_est, QF_model_vs_null_pval = QF_model_vs_null_pval,
         # detailed results for plots and downstream analysis
@@ -200,6 +205,15 @@ n_fold, n_run, n_perm_null, QF.FUN, QF_label, binom_method, binom_pos, fscore_be
         feature_coef_model_vs_null_pval = as(feature_coef_model_vs_null_pval,"CsparseMatrix"),
         feature_freq_model_vs_null_pval = as(feature_freq_model_vs_null_pval,"CsparseMatrix")
         )
+        if (logrank) {
+            output = append(output, list(logrank_pval = logrank_pval))
+        }
+        if (survAUC) {
+            output = append(output, list(
+            AUC_mean = AUC_mean, AUC_sd = AUC_sd, AUC_perc05 = AUC_perc05, AUC_perc50 = AUC_perc50, AUC_perc95 = AUC_perc95, AUC_pval = AUC_pval
+            ))
+        }
+        output
     }
     
     tryCatch({
@@ -226,30 +240,19 @@ n_fold, n_run, n_perm_null, QF.FUN, QF_label, binom_method, binom_pos, fscore_be
             format = paste0("  running MODEL for alpha = ",alpha[i_alpha]," [:bar] :percent in :elapsed"),
             total = n_run, clear = T, width= 60)
             for (i_run in 1:n_run) {
-                fold_distrib_OK = F
-                fold_distrib_fail = 0
-                while (!fold_distrib_OK) { # for categorical models, we must check that each class is in more than 1 fold.
-                    foldid_per_run[[i_alpha]][,i_run] = sample(foldid)
-                    if (sum(apply(table(foldid_per_run[[i_alpha]][,i_run],y)>0,2,sum)>1)==n_class) {
-                        fold_distrib_OK = T
-                    } else {
-                        fold_distrib_fail = fold_distrib_fail + 1
-                        if (fold_distrib_fail>fold_distrib_fail.max) {
-                            stop("Failure in class distribution across cross-validation folds. Increase n_fold, remove very small classes, or re-run with larger fold_distrib_fail.max\n")
-                        }
-                    }
-                }
+                foldid_per_run[[i_alpha]][,i_run] = sample(foldid)
                 feature_coef_per_run = vector("list",n_lambda)
                 for (i_lambda in 1:n_lambda) {
                     feature_coef_per_run[[i_lambda]] = matrix(rep(NA,n_feature*n_fold),ncol=n_fold)
                 }
                 for (i_fold in 1:n_fold) {
                     instance_in_bag = foldid_per_run[[i_alpha]][,i_run]!=i_fold
-                    fit = glmnet(x[instance_in_bag,],y[instance_in_bag],alpha=alpha[i_alpha],family=family,lambda=lambda_values[[i_alpha]])
+                    fit = glmnet(x[instance_in_bag,],y[instance_in_bag,],alpha=alpha[i_alpha],family=family,lambda=lambda_values[[i_alpha]])
                     n_lambda_eff = length(fit$lambda) # n_lambda_eff may be smaller than n_lambda
-                    predicted_values_all_lambda[n_instance*(i_run-1)+which(!instance_in_bag),] = predict(fit, x[!instance_in_bag,], type=prediction_type)
+                    predicted_values_all_lambda[n_instance*(i_run-1)+which(!instance_in_bag),1:n_lambda_eff] = predict(fit, x[!instance_in_bag,], type=prediction_type)
                     for (i_lambda in 1:n_lambda_eff) {
-                        feature_coef_per_run[[i_lambda]][,i_fold] = coef(fit)[-1,][,i_lambda] # we remove the intercept
+                        #feature_coef_per_run[[i_lambda]][,i_fold] = coef(fit)[-1,][,i_lambda] # we remove the intercept
+                        feature_coef_per_run[[i_lambda]][,i_fold] = coef(fit)[,i_lambda]
                     }
                 }
                 for (i_lambda in 1:n_lambda) {
@@ -278,12 +281,12 @@ n_fold, n_run, n_perm_null, QF.FUN, QF_label, binom_method, binom_pos, fscore_be
             best_lambda[i_alpha] = lambda_values[[i_alpha]][best_lambda_index]
             model_QF_est[i_alpha] = lambda_QF_est[[i_alpha]][best_lambda_index]
             
-            predicted_values[[i_alpha]] = matrix(rep(NA,n_instance*n_class),ncol=n_class)
+            predicted_values[[i_alpha]] = matrix(rep(NA,n_instance*2),ncol=2)
             for (i_instance in 1:n_instance) {
-                for (i_class in 1:n_class) {
-                    predicted_values[[i_alpha]][i_instance,i_class] =  sum(predicted_values_all_lambda[seq(i_instance,n_instance*n_run,by=n_instance),
-                    best_lambda_index]==class[i_class])/n_run
-                }
+                predicted_values[[i_alpha]][i_instance,1] = median(predicted_values_all_lambda[seq(i_instance,n_instance*n_run,by=n_instance),
+                best_lambda_index],na.rm=T)
+                predicted_values[[i_alpha]][i_instance,2] = mad(predicted_values_all_lambda[seq(i_instance,n_instance*n_run,by=n_instance),
+                best_lambda_index],na.rm=T)
             }
             
             weight_tot = rowSums(feature_freq_per_lambda[[best_lambda_index]])
@@ -294,6 +297,38 @@ n_fold, n_run, n_perm_null, QF.FUN, QF_label, binom_method, binom_pos, fscore_be
             feature_freq_mean[,i_alpha] = apply(feature_freq_per_lambda[[best_lambda_index]],1,mean)
             feature_freq_sd[,i_alpha] = apply(feature_freq_per_lambda[[best_lambda_index]],1,sd)
             
+            if (logrank) {
+                pb <- progress_bar$new(
+                format = paste0(" MODEL logrank for alpha = ",alpha[i_alpha]," [:bar] :percent in :elapsed"),
+                total = n_run, clear = T, width= 60)
+                logrank_chisq = rep(NA,n_run)
+                for (i_run in 1:n_run) {
+                    risk_group = risk_group_template
+                    risk_group[order(predicted_values_all_lambda[n_instance*(i_run-1)+(1:n_instance),best_lambda_index])[round(n_instance/2+1):n_instance]]=2
+                    logrank_chisq[i_run] = survdiff(Surv(time,status)~risk_group,data=data.frame(y,as.factor(risk_group)))$chisq
+                    pb$tick()
+                }
+            }
+            
+            if (survAUC) {
+                pb <- progress_bar$new(
+                format = paste0("  MODEL AUC for alpha = ",alpha[i_alpha]," [:bar] :percent in :elapsed"),
+                total = n_run*n_survAUC_time, clear = T, width= 60)
+                AUC = vector("list",n_survAUC_time)
+                for (i_survAUC_time in 1:n_survAUC_time) {
+                    AUC[[i_survAUC_time]] = rep(NA,n_run)
+                    for (i_run in 1:n_run) {
+                        AUC[[i_survAUC_time]][i_run] = survivalROC(Stime=y[,"time"],status=y[,"status"],marker=predicted_values_all_lambda[n_instance*(i_run-1)+(1:n_instance),best_lambda_index],predict.time=survAUC_time[i_survAUC_time],method=survAUC_method,lambda=survAUC_lambda,span=survAUC_span)$AUC
+                        pb$tick()
+                    }
+                    AUC_mean[i_survAUC_time,i_alpha] = mean(AUC[[i_survAUC_time]])
+                    AUC_sd[i_survAUC_time,i_alpha] = sd(AUC[[i_survAUC_time]])
+                    AUC_perc05[i_survAUC_time,i_alpha] = quantile(AUC[[i_survAUC_time]],probs=0.05)
+                    AUC_perc50[i_survAUC_time,i_alpha] = quantile(AUC[[i_survAUC_time]],probs=0.50)
+                    AUC_perc95[i_survAUC_time,i_alpha] = quantile(AUC[[i_survAUC_time]],probs=0.95)
+                }
+            }
+            
             # permutation-based null
             null_QF_est_all_runs = matrix(rep(NA,n_run*n_perm_null),ncol=n_perm_null)
             null_feature_coef = matrix(rep(NA,n_feature*n_run*n_perm_null),ncol=n_run*n_perm_null)
@@ -301,33 +336,41 @@ n_fold, n_run, n_perm_null, QF.FUN, QF_label, binom_method, binom_pos, fscore_be
             pb <- progress_bar$new(
             format = paste0("  running NULL for alpha = ",alpha[i_alpha]," [:bar] :percent in :elapsed"),
             total = n_run, clear = T, width= 60)
+            if (logrank) {
+                logrank_chisq_null = matrix(rep(NA,n_run*n_perm_null),ncol=n_perm_null)
+            }
+            if (survAUC) {
+                AUC_null = vector("list",n_survAUC_time)
+                for (i_survAUC_time in 1:n_survAUC_time) {
+                    AUC_null[[i_survAUC_time]] = matrix(rep(NA,n_run*n_perm_null),ncol=n_perm_null)
+                }
+            }
             for (i_run in 1:n_run) {
                 for (i_perm_null in 1:n_perm_null) {   # permutation loop
-                    fold_distrib_OK = F
-                    fold_distrib_fail = 0
-                    while (!fold_distrib_OK) { # for categorical models, we must check that each class is in more than 1 fold.
-                        y_RDM = sample(y) # we randomly permute the response vector
-                        if (sum(apply(table(foldid_per_run[[i_alpha]][,i_run],y_RDM)>0,2,sum)>1)==n_class) {
-                            fold_distrib_OK = T
-                        } else {
-                            fold_distrib_fail = fold_distrib_fail + 1
-                            if (fold_distrib_fail>fold_distrib_fail.max) {
-                                stop("Failure in class distribution across cross-validation folds. Increase n_fold, remove very small classes, or re-run with larger fold_distrib_fail.max\n")
-                            }
-                        }
-                    }
+                    y_RDM = y[sample(n_instance),] # we randomly permute the response vector
                     null_predicted_values = rep(NA,n_instance)
                     null_feature_coef_per_run = matrix(rep(NA,n_feature*n_fold),ncol=n_fold)
                     for (i_fold in 1:n_fold) {
                         instance_in_bag = foldid_per_run[[i_alpha]][,i_run]!=i_fold
-                        fit = glmnet(x[instance_in_bag,],y_RDM[instance_in_bag],alpha=alpha[i_alpha],family=family,lambda=lambda_values[[i_alpha]][best_lambda_index])
+                        fit = glmnet(x[instance_in_bag,],y_RDM[instance_in_bag,],alpha=alpha[i_alpha],family=family,lambda=lambda_values[[i_alpha]][best_lambda_index])
                         null_predicted_values[which(!instance_in_bag)] = predict(fit, x[!instance_in_bag,], s=lambda_values[[i_alpha]][best_lambda_index], type=prediction_type)
-                        null_feature_coef_per_run[,i_fold] = coef(fit)[-1,] # we remove the intercept
+                        #null_feature_coef_per_run[,i_fold] = coef(fit)[-1,] # we remove the intercept
+                        null_feature_coef_per_run[,i_fold] = as.numeric(coef(fit))
                     }
                     null_QF_est_all_runs[i_run,i_perm_null] = QF(null_predicted_values,y_RDM)
                     is.na(null_feature_coef_per_run) <- null_feature_coef_per_run == 0
                     null_feature_coef[,(i_run-1)*n_perm_null+i_perm_null] = rowMeans(null_feature_coef_per_run, na.rm=T) # we obtain the mean (nonzero) coefficients over folds.
                     null_feature_freq[,(i_run-1)*n_perm_null+i_perm_null] = rowSums(!is.na(null_feature_coef_per_run))/n_fold
+                    if (logrank) {
+                        risk_group = risk_group_template
+                        risk_group[order(null_predicted_values)[round(n_instance/2+1):n_instance]]=2
+                        logrank_chisq_null[i_run,i_perm_null] = survdiff(Surv(time,status)~risk_group,data=data.frame(y_RDM,as.factor(risk_group)))$chisq
+                    }
+                    if (survAUC) {
+                        for (i_survAUC_time in 1:n_survAUC_time) {
+                            AUC_null[[i_survAUC_time]][i_run,i_perm_null] = survivalROC(Stime=y_RDM[,"time"],status=y_RDM[,"status"],marker=null_predicted_values,predict.time=survAUC_time[i_survAUC_time],method=survAUC_method,lambda=survAUC_lambda,span=survAUC_span)$AUC
+                        }
+                    }
                 }
                 pb$tick()
             }
@@ -349,6 +392,30 @@ n_fold, n_run, n_perm_null, QF.FUN, QF_label, binom_method, binom_pos, fscore_be
             }
             QF_model_vs_null_pval[i_alpha] = (n_tail+1)/(n_tot+1) # correction based on Phipson & Smyth (2010)
             
+            if (logrank) {
+                n_tail = 0
+                n_tot = 0
+                for (i_run in 1:n_run) {
+                    null_above_model = logrank_chisq_null[i_run,]>logrank_chisq[i_run]
+                    n_tail = n_tail + sum(null_above_model,na.rm=T)
+                    n_tot = n_tot + sum(!is.na(null_above_model))
+                }
+                logrank_pval[i_alpha] = (n_tail+1)/(n_tot+1)
+            }
+            
+            if (survAUC) {
+                for (i_survAUC_time in 1:n_survAUC_time) {
+                    n_tail = 0
+                    n_tot = 0
+                    for (i_run in 1:n_run) {
+                        null_above_model = AUC_null[[i_survAUC_time]][i_run,]>AUC[[i_survAUC_time]][i_run]
+                        n_tail = n_tail + sum(null_above_model,na.rm=T)
+                        n_tot = n_tot + sum(!is.na(null_above_model))
+                    }
+                    AUC_pval[i_survAUC_time,i_alpha] = (n_tail+1)/(n_tot+1)
+                }
+            }
+            
             for (i_feature in 1:n_feature) {
                 n_coef = 0
                 n_tail_coef = 0
@@ -362,6 +429,7 @@ n_fold, n_run, n_perm_null, QF.FUN, QF_label, binom_method, binom_pos, fscore_be
                 feature_coef_model_vs_null_pval[i_feature,i_alpha] = (n_tail_coef+1)/(n_coef+1)
                 feature_freq_model_vs_null_pval[i_feature,i_alpha] = (n_tail_freq+1)/(n_run*n_perm_null+1)
             }
+            
             n_alpha_eff = i_alpha # to keep track of fully completed cycles
             cat("alpha = ",alpha[i_alpha]," completed.\n")
         } # end of alpha loop
@@ -373,3 +441,4 @@ n_fold, n_run, n_perm_null, QF.FUN, QF_label, binom_method, binom_pos, fscore_be
         }
     }) # end of tryCatch
 }
+

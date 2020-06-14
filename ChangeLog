@@ -1,3 +1,6 @@
+2020-06-14 Julian Candia <julian.candia@nih.gov> version 1.1.1
+        * deleted exportClasses() from NAMESPACE to address some Package Check warnings.
+
 2019-09-19 Julian Candia <julian.candia@nih.gov> version 1.1.0
         * added Cox regression (family="cox").
         * added BreastC_Surv.RData dataset for Cox regression.

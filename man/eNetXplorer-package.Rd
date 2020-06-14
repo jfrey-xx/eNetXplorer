@@ -3,14 +3,14 @@
 \docType{package}
 \title{explores elastic net families for generalized linear models}
 \description{
-Provides a quantitative toolkit to explore elastic net families and to uncover correlates contributing to prediction under a cross-validation framework. Fits linear, binomial (logistic), multinomial and Cox regression models.
+Provides a quantitative toolkit to explore elastic net families and to uncover correlates contributing to prediction under a cross-validation framework. Fits linear, binomial (logistic), multinomial, and Cox regression models.
 }
 \details{
 \tabular{ll}{
 Package: \tab eNetXplorer\cr
 Type: \tab Package\cr
-Version: \tab 1.1.0\cr
-Date: \tab 2019-09-19\cr
+Version: \tab 1.1.1\cr
+Date: \tab 2020-06-14\cr
 License: \tab GPL-3\cr
 }
 This package provides a full pipeline of analysis: 

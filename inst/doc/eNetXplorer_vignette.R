@@ -1,10 +1,10 @@
-## ---- include=FALSE------------------------------------------------------
+## ---- include=FALSE-----------------------------------------------------------
 knitr::opts_chunk$set(echo = TRUE)
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 #  install.packages("eNetXplorer")
 
-## ---- message=FALSE------------------------------------------------------
+## ---- message=FALSE-----------------------------------------------------------
 data_gen <- function(n_inst, covmat, seed=123) {
     library (expm);
     set.seed(seed)
@@ -15,7 +15,7 @@ data_gen <- function(n_inst, covmat, seed=123) {
     list(response=data[,1],predictor=predictor)
 }
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 covmat_gen <- function(n_pred, block_size, r_resp, r_block) {
     covmat = matrix(rep(1.e-3,(n_pred+1)**2),ncol=(n_pred+1))
     for (i_pred in 1:block_size) {
@@ -34,7 +34,7 @@ covmat_gen <- function(n_pred, block_size, r_resp, r_block) {
     covmat
 }
 
-## ---- message=FALSE------------------------------------------------------
+## ---- message=FALSE-----------------------------------------------------------
 data = data_gen(n_inst=50, covmat_gen(n_pred=60, block_size=5, r_resp=0.5, r_block=0.35))
 
 ## ---- echo=FALSE, message=FALSE, fig.height = 4.5, fig.width = 6.5, fig.align = "left"----
@@ -46,27 +46,27 @@ n_breaks = 10
 breaks = seq(-cor_max,cor_max,2*cor_max/(n_breaks-1))
 heatmap.2(cor_mat,col=redgreen,breaks=breaks,scale="none",dendrogram="none",Rowv=F,Colv=F,margins=c(5,8),cexRow=0.5,cexCol=0.5,trace="none")
 
-## ---- echo=FALSE, fig.height = 3.6, fig.width = 5.5, fig.align = "left"----
+## ---- echo=FALSE, fig.height = 3.6, fig.width = 5.5, fig.align = "left"-------
 plot(cor(data$predictor,data$response),xaxt="n",xlab="predictor",ylab="correlation to response")
 axis(side=1, at=1:ncol(data$predictor),labels=colnames(data$predictor), las=2, cex.axis=0.5)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 library(eNetXplorer)
 
-## ---- warning=FALSE, eval=FALSE, tidy=TRUE-------------------------------
+## ---- warning=FALSE, eval=FALSE, tidy=TRUE------------------------------------
 #  fit_def = eNetXplorer(x=data$predictor,y=data$response,family="gaussian")
 
-## ---- warning=FALSE, eval=FALSE, tidy=TRUE-------------------------------
+## ---- warning=FALSE, eval=FALSE, tidy=TRUE------------------------------------
 #  fit = eNetXplorer(x=data$predictor,y=data$response,family="gaussian",alpha=seq(0,1,by=0.1),n_run=1000,n_perm_null=250,seed=123)
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- echo=FALSE--------------------------------------------------------------
 # OR, for our purposes, we upload the object previously generated:
 load("Case1_r3_fit.Robj")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 summary(fit)
 
-## ---- warning=FALSE, fig.height = 4, fig.width = 5.5, fig.align = "left"----
+## ---- warning=FALSE, fig.height = 4, fig.width = 5.5, fig.align = "left"------
 plot(fit, plot.type="summary") 
 
 ## ---- warning=FALSE, tidy=TRUE, fig.height = 4.2, fig.width = 5.5, fig.align = "left"----
@@ -81,10 +81,10 @@ plot(fit, alpha.index = which.max(fit$model_QF_est), plot.type="lambdaVsQF")
 ## ---- warning=FALSE, tidy=TRUE, fig.height = 4, fig.width = 5.5, fig.align = "left"----
 plot(fit, alpha.index = which.max(fit$model_QF_est), plot.type="measuredVsOOB") 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 data = data_gen(n_inst=50, covmat_gen(n_pred=60, block_size=1, r_resp=0.7, r_block=0.35))
 
-## ---- echo=FALSE, fig.height = 4.5, fig.width = 6.5, fig.align = "left"----
+## ---- echo=FALSE, fig.height = 4.5, fig.width = 6.5, fig.align = "left"-------
 library(gplots)
 library(RColorBrewer)
 cor_mat = cor(data$predictor)
@@ -93,21 +93,21 @@ n_breaks = 10
 breaks = seq(-cor_max,cor_max,2*cor_max/(n_breaks-1))
 heatmap.2(cor_mat,col=redgreen,breaks=breaks,scale="none",dendrogram="none",Rowv=F,Colv=F,margins=c(5,8),cexRow=0.5,cexCol=0.5,trace="none")
 
-## ---- echo=FALSE, fig.height = 3.6, fig.width = 5.5, fig.align ="left"----
+## ---- echo=FALSE, fig.height = 3.6, fig.width = 5.5, fig.align ="left"--------
 plot(cor(data$predictor,data$response),xaxt="n",xlab="predictor",ylab="correlation to response")
 axis(side=1, at=1:ncol(data$predictor),labels=colnames(data$predictor), las=2, cex.axis=0.5)
 
-## ---- warning=FALSE, eval=FALSE, tidy=TRUE-------------------------------
+## ---- warning=FALSE, eval=FALSE, tidy=TRUE------------------------------------
 #  fit = eNetXplorer(x=data$predictor,y=data$response,family="gaussian",alpha=seq(0,1,by=0.1),n_run=1000,n_perm_null=250,seed=123)
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- echo=FALSE--------------------------------------------------------------
 # OR, for our purposes, we upload the object previously generated:
 load("Case2_r3_fit.Robj")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 summary(fit)
 
-## ---- warning=FALSE, fig.height = 4, fig.width = 5.5, fig.align ="left"----
+## ---- warning=FALSE, fig.height = 4, fig.width = 5.5, fig.align ="left"-------
 plot(fit, plot.type="summary") 
 
 ## ---- warning=FALSE, tidy=TRUE, fig.height = 4.2, fig.width = 5.5, fig.align ="left"----
@@ -116,13 +116,13 @@ plot(fit, alpha.index = which.max(fit$model_QF_est), plot.type="featureCaterpill
 ## ---- warning=FALSE, tidy=TRUE, fig.height = 4.5, fig.width = 6.5, fig.align ="left"----
 plot(fit, alpha.index = which.max(fit$model_QF_est), plot.type="featureHeatmap", stat=c("coef"),notecex=1.5) 
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 #  data(H1N1_Flow)
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 #  data(Leukemia_miR)
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 #  expr_full = Leuk_miR_full$expression_matrix
 #  miR_filter = rep(F,nrow(Leuk_miR_full$miR_metadata))
 #  miR_filter[apply(expr_full,2,mean)>1.2] = T

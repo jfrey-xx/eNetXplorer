@@ -2,9 +2,9 @@ export(eNetXplorer,print.eNetXplorer,
 summary.eNetXplorer,print.summary.eNetXplorer,
 plot.eNetXplorer,plotSummary,plotLambdaVsQF,plotMeasuredVsOOB,
 plotContingency,plotFeatureCaterpillar,plotFeatureHeatmap,plotKaplanMeier,plotSurvROC,
-summaryPDF,export)
+summaryPDF,export,mergeObj)
 
-import(glmnet,stats,Matrix,RColorBrewer,calibrate,progress,survival,survcomp,survivalROC)
+import(glmnet,stats,Matrix,RColorBrewer,calibrate,progress,survival,survcomp,timeROC)
 
 importFrom("graphics", "abline", "arrows", "axTicks", "axis",
              "boxplot", "lines", "mtext", "par", "plot", "points",

@@ -11,8 +11,8 @@ For categorical models, it generates a boxplot across classes showing the freque
 plotMeasuredVsOOB(x, alpha.index=NULL, xlab=NULL, ylab=NULL, 
 cex.lab=0.95, main=NULL, col.main="black", cex.main=0.85, instance.label=TRUE,
 instance.label.cex=NULL, instance.label.offset=NULL, 
-instance.label.added.margin=NULL, col=NULL, transparency=NULL, jitter=NULL, 
-cex.pt=NULL, class.color=NULL, \dots)
+instance.label.added.margin=NULL, col=NULL, box.wex=NULL, box.range=NULL,
+box.col=NULL, transparency=NULL, jitter=NULL, cex.pt=NULL, class.color=NULL, \dots)
 }
 \arguments{
   \item{x}{\code{eNetXplorer} object.}
@@ -28,10 +28,13 @@ cex.pt=NULL, class.color=NULL, \dots)
   \item{instance.label.offset}{Offset of instance labels.}
   \item{instance.label.added.margin}{(linear regression only) Margin size  to accomodate instance label display.}
   \item{col}{(linear regression only) Symbol color.}
-  \item{transparency}{(categorical models only) Symbol transparency.}
-  \item{jitter}{(categorical models only) Symbol jitter.}
-  \item{cex.pt}{(categorical models only) Symbol size.}
-  \item{class.color}{(categorical models only) Vector of class colors.}
+  \item{box.wex}{(categorical models only) Boxplot \code{boxwex} parameter. Default is 0.5.}
+  \item{box.range}{(categorical models only) Boxplot \code{range} parameter. Default is 0.}
+  \item{box.col}{(categorical models only) Boxplot \code{col} parameter. Default is \code{white}.}
+  \item{transparency}{(categorical models only) Symbol transparency. Default is 70.}
+  \item{jitter}{(categorical models only) Symbol jitter. Default is 0.25.}
+  \item{cex.pt}{(categorical models only) Symbol size. Default is 1.7}
+  \item{class.color}{(categorical models only) Vector of class colors. Default is the default palette.}
   \item{\dots}{Additional plotting parameters.}
 }
 \author{Julian Candia and John S. Tsang\cr 

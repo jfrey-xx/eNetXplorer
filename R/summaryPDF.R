@@ -16,7 +16,7 @@ summaryPDF <- function (x, dest_dir=getwd(), dest_dir_create=TRUE, dest_file="eN
         if (x$family=="cox") {
             plot(x=x,plot.type="KaplanMeier",alpha.index=i_alpha)
             if (x$survAUC) {
-                plot(x=x,plot.type="survROC",alpha.index=i_alpha,survAUC_time=x$survAUC_time,survAUC_method=x$survAUC_method,survAUC_lambda=x$survAUC_lambda,survAUC_span=x$survAUC_span)
+                plot(x=x,plot.type="survROC",alpha.index=i_alpha,survAUC_time=x$survAUC_time)
             }
         }
         for (stat in c("coef","freq")) {

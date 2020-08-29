@@ -37,6 +37,13 @@ Maintainer: Julian Candia \email{julian.candia@nih.gov}}
 \code{\link{eNetXplorer}}, \code{\link{plot}}
 }
 \examples{
+\dontshow{
+set.seed(123)
+fit = eNetXplorer(x=matrix(rnorm(120),ncol=4),y=c(rep(0,15),rep(1,15)),
+family="binomial",n_run=5, n_perm_null=4,alpha=c(0.5,1))
+plot(x=fit,plot.type="contingency")
+plotContingency(x=fit,alpha.index=1)
+}
 \donttest{
 data(QuickStartEx)
 binarized=rep("low",length(QuickStartEx$response))

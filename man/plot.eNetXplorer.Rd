@@ -42,7 +42,8 @@ stat=c("freq","coef"), \dots)
   \item{x}{\code{eNetXplorer} object.}
   \item{plot.type}{Type of plot to be produced. Available plots 
   are \code{"summary"}, \code{"lambdaVsQF"}, \code{"measuredVsOOB"} (gaussian and categorical models only), \code{"contingency"} (categorical models only), 
-    \code{"featureCaterpillar"}, \code{"featureHeatmap"}, \code{"KaplanMeier"} (Cox models only) and \code{"survROC"} (Cox models only).}
+    \code{"featureCaterpillar"}, \code{"featureHeatmap"},
+    \code{"KaplanMeier"} (Cox models only) and \code{"survROC"} (Cox models only).}
   \item{alpha.index}{Integer indices to select \code{alpha} values. Default is \code{1:length(alpha)}}
   \item{stat}{
   Feature statistic: \code{"freq"} for nonzero frequency, \code{"coef"} for mean nonzero coefficient. 
@@ -52,8 +53,9 @@ stat=c("freq","coef"), \dots)
 \author{Julian Candia and John S. Tsang\cr 
 Maintainer: Julian Candia \email{julian.candia@nih.gov}}
 \seealso{
-\code{\link{eNetXplorer}}, \code{\link{plotSummary}}, \code{\link{plotLambdaVsQF}}, \code{\link{plotMeasuredVsOOB}}, \code{\link{plotContingency}}, 
-\code{\link{plotFeatureCaterpillar}}, \code{\link{plotFeatureHeatmap}}, \code{\link{plotKaplanMeier}}, \code{\link{plotSurvROC}}.
+\code{\link{eNetXplorer}}, \code{\link{plotSummary}}, \code{\link{plotLambdaVsQF}}, \code{\link{plotMeasuredVsOOB}}, \code{\link{plotContingency}},
+
+\code{\link{plotFeatureCaterpillar}}, \code{\link{plotFeatureHeatmap}}, \code{\link{plotKaplanMeier}}, \code{\link{plotSurvROC}}
 }
 \examples{
 \donttest{

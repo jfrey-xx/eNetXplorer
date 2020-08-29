@@ -45,9 +45,9 @@ export <- function (x, dest_dir=getwd(), dest_dir_create=TRUE, delim=c("tsv","cs
             x$multinom_method,x$fscore_beta,x$fold_distrib_fail.max)
         } else if (x$family=="cox") {
             args.desc = c("family","nlambda","nlambda.ext","seed","scaled","n_fold","n_run","n_perm_null","QF_label",
-            "cox_index","logrank","survAUC","survAUC_time","survAUC_method","survAUC_lambda","survAUC_span")
+            "cox_index","logrank","survAUC","survAUC_time")
             args.value = list(x$family,x$nlambda,x$nlambda.ext,x$seed,x$scaled,x$n_fold,x$n_run,x$n_perm_null,x$QF_label,
-            x$cox_index,x$logrank,x$survAUC,paste0(x$survAUC_time,collapse=","),x$survAUC_method,x$survAUC_lambda,x$survAUC_span)
+            x$cox_index,x$logrank,x$survAUC,paste0(x$survAUC_time,collapse=","))
         }
         
         args.value[sapply(args.value, is.null)] <- NA
@@ -68,6 +68,14 @@ export <- function (x, dest_dir=getwd(), dest_dir_create=TRUE, delim=c("tsv","cs
     if (output.data) {
         root_str = "outputData_"
         n_alpha = length(x$alpha)
+        
+        if (x$save_lambda_QF_full) {
+            for (i_alpha in 1:n_alpha) {
+               output =  rbind(c("lambda",paste0("run_",1:x$n_run)),cbind(x$lambda_values[[i_alpha]],x$lambda_QF_est_full[[i_alpha]]))
+               write(t(output),ncolumns=ncol(output),
+               file=file.path(dest_dir,paste0(root_str,"lambda_QF_est_full_a",x$alpha[i_alpha],".",ext)),sep=sep)
+            }
+        }
         
         nlambda = max(sapply(x$lambda_values,length)) # to pad missing lambda values if needed
         for (i_alpha in 1:n_alpha) {
@@ -244,17 +252,17 @@ export <- function (x, dest_dir=getwd(), dest_dir_create=TRUE, delim=c("tsv","cs
                 write(t(output),ncolumns=ncol(output),
                 file=file.path(dest_dir,paste0(root_str,"survAUC_sd.",ext)),sep=sep)
                 
-                output = rbind(c("time",paste0("a",x$alpha)),cbind(x$survAUC_time,x$AUC_perc05))
+                output = rbind(c("time",paste0("a",x$alpha)),cbind(x$survAUC_time,x$AUC_perc025))
                 write(t(output),ncolumns=ncol(output),
-                file=file.path(dest_dir,paste0(root_str,"survAUC_perc05.",ext)),sep=sep)
+                file=file.path(dest_dir,paste0(root_str,"survAUC_perc025.",ext)),sep=sep)
                 
-                output = rbind(c("time",paste0("a",x$alpha)),cbind(x$survAUC_time,x$AUC_perc50))
+                output = rbind(c("time",paste0("a",x$alpha)),cbind(x$survAUC_time,x$AUC_perc500))
                 write(t(output),ncolumns=ncol(output),
-                file=file.path(dest_dir,paste0(root_str,"survAUC_perc50.",ext)),sep=sep)
+                file=file.path(dest_dir,paste0(root_str,"survAUC_perc500.",ext)),sep=sep)
                 
-                output = rbind(c("time",paste0("a",x$alpha)),cbind(x$survAUC_time,x$AUC_perc95))
+                output = rbind(c("time",paste0("a",x$alpha)),cbind(x$survAUC_time,x$AUC_perc975))
                 write(t(output),ncolumns=ncol(output),
-                file=file.path(dest_dir,paste0(root_str,"survAUC_perc95.",ext)),sep=sep)
+                file=file.path(dest_dir,paste0(root_str,"survAUC_perc975.",ext)),sep=sep)
                 
                 output = rbind(c("time",paste0("a",x$alpha)),cbind(x$survAUC_time,x$AUC_pval))
                 write(t(output),ncolumns=ncol(output),

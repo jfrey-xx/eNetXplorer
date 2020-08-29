@@ -9,6 +9,11 @@ line.subtitle1=-1,cex.subtitle1=0.65, subtitle2=NULL, col.subtitle2="darkgray",l
     if (is.null(alpha.index)) {
         alpha.index = 1:length(x$alpha)
     }
+    n_alpha = length(x$alpha)
+    if (n_alpha<2) {
+        warning("Number of alpha values is < 2")
+        return()
+    }
     stat = match.arg(stat)
     if ((x$family=="multinomial")&&(sum(levels(x$response)>2))) {
         plotFeatureHeatmapMultinom(
@@ -24,7 +29,6 @@ line.subtitle1=-1,cex.subtitle1=0.65, subtitle2=NULL, col.subtitle2="darkgray",l
         subtitle2=subtitle2, col.subtitle2=col.subtitle2, line.subtitle2=line.subtitle2, cex.subtitle2=cex.subtitle2,
         ...)
     } else {
-        n_alpha = length(x$alpha)
         for (i_alpha in alpha.index) {
             if (stat=="freq") {
                 feature_heatmap = as.matrix(x$feature_freq_mean)

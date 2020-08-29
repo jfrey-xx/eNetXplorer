@@ -1,3 +1,12 @@
+2020-08-25 Julian Candia <julian.candia@nih.gov> version 1.1.2
+        * added mergeObj.R function to merge objects generated with different alphas.
+        * added option to save full lambda vs QF information; updated export function accordingly.  
+        * added option to create the destination directory recursively.
+        * survival time-dependent AUC in Cox models is now calculated using the timeROC package and dependencies (before, the package survivalROC was used). 
+        * fixes to time-dependent ROC plots. 
+        * updated and improved man pages.
+        * extensive update of the vignette to report errata and to discuss parallelization, negative regression slopes, etc.
+ 
 2020-06-14 Julian Candia <julian.candia@nih.gov> version 1.1.1
         * deleted exportClasses() from NAMESPACE to address some Package Check warnings.
 

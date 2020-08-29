@@ -8,19 +8,16 @@ Provided that the \code{eNetXplorer} object was generated with \code{survAUC=T},
 median AUC and 95\% CI are shown in the default title. 
 For more details, see Heagerty et al and package \code{survivalROC}.}
 \usage{
-plotSurvROC(x, alpha.index=NULL, survAUC_time, survAUC_method=c("KM","NNE"),
-survAUC_lambda=NULL, survAUC_span=NULL, xlab="False positive rate (1 - Specificity)",
+plotSurvROC(x, alpha.index=NULL, survAUC_time,
+xlab="False positive rate (1 - Specificity)",
 ylab="True positive rate (Sensitivity)", cex.lab=1, main=NULL, col.main="black", 
-cex.main=0.95, status0="censored", status1="event", \dots)
+cex.main=0.95, status0="censored", status1="events", \dots)
 }
 \arguments{
   \item{x}{\code{eNetXplorer} object (must be \code{family="cox"}).}
   \item{alpha.index}{Integer indices to select alpha values. Default is \code{1:length(alpha)}}
   \item{survAUC_time}{Timepoint(s) of interest. Must be in the same time units as the survival time
 provided to build the \code{eNetXplorer} object.}
-\item{survAUC_method}{Kaplan-Meier (\code{"KM"}) or Nearest-Neighbor Estimation (\code{"NNE"}). Default is \code{"KM"}.}
-\item{survAUC_lambda}{Smoothing parameter for the \code{"NNE"} method.}
-\item{survAUC_span}{Span for the \code{"NNE"} method.}
   \item{xlab}{Custom x-axis label.}
   \item{ylab}{Custom y-axis label.}
   \item{cex.lab}{Axis label size.}
@@ -33,8 +30,10 @@ provided to build the \code{eNetXplorer} object.}
 }
 \author{Julian Candia and John S. Tsang\cr 
 Maintainer: Julian Candia \email{julian.candia@nih.gov}}
-\references{Heagerty PJ, Lumley T and Pepe MS. 
-  \emph{Time-dependent ROC Curves for Censored Survival Data and a Diagnostic Marker}, Biometrics (2000) 56, 337-344.
+\references{Blanche P, Dartigues J-F and Jacqmin-Gadda H.
+    \emph{Estimating and comparing time-dependent areas under receiver operating
+    characteristic curves for censored event times with competing risks},
+    Statistics in Medicine (2013) 32:5381-5397.
 }
 
 \seealso{
@@ -45,6 +44,6 @@ Maintainer: Julian Candia \email{julian.candia@nih.gov}}
 data(breastCancerSurv)
 fit = eNetXplorer(x=breastCancerSurv$predictor, y=breastCancerSurv$response, family="cox", 
 n_run=25, n_perm_null=15, seed=111, survAUC=TRUE, survAUC_time=c(1,5)*365)
-plot(x=fit, plot.type="survROC", survAUC_time=c(1,5)*365, status0="alive", status1="dead")
+plot(x=fit, plot.type="survROC", survAUC_time=c(1,5)*365, status0="censored", status1="deaths")
 }
 }

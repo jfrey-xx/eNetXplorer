@@ -18,8 +18,12 @@ knitr::opts_chunk$set(echo = TRUE)
 4. [Datasets](#datasets)
    1. [`H5N1_Flow`](#H5N1_Flow)
    2. [`Leukemia_miR`](#Leukemia_miR)
-5. [Notes on the algorithm's efficiency](#efficiency)
-6. [Summary](#summary)
+   3. [`breastCancerSurv`](#breastCancerSurv)
+5. [Why is my linear regression slope negative?](#slope)
+6. [Notes on the algorithm's efficiency](#efficiency)
+7. [Parallelization](#parallel)
+8. [Errata](#errata)
+9. [Summary](#summary)
 
 # 1. About <a name="about"></a>
 
@@ -46,14 +50,14 @@ First, we create a function to generate data for a Gaussian (linear regression) 
 * An input numerical matrix with `n_inst` instances or observations (as rows)  and `n_pred` predictors or features (as columns). 
 * An input numerical vector of length `n_inst` with the observed response.  
 
-For normally distributed random variables, the following data-generating function will create a set of features correlated with the response according to any arbitrary, pre-defined population covariance matrix `covmat`:
+For normally distributed random variables, the following data-generating function will create a set of features correlated with the response according to any arbitrary, pre-defined **population** covariance matrix `covmat`:
 
 ```{r, message=FALSE}
-data_gen <- function(n_inst, covmat, seed=123) {
+data_gen_pop_covmat <- function(n_inst, covmat, seed=123) {
     library (expm);
     set.seed(seed)
     data <- matrix(rnorm(n_inst*ncol(covmat)),ncol=ncol(covmat))%*%sqrtm(covmat)
-    predictor=data[,-1]
+    predictor=data[,-1,drop=F]
     rownames(predictor) = paste0("Inst.",1:n_inst)
     colnames(predictor) = paste0("Feat.",1:(ncol(covmat)-1))
     list(response=data[,1],predictor=predictor)
@@ -84,7 +88,7 @@ covmat_gen <- function(n_pred, block_size, r_resp, r_block) {
 
 Let us use these two functions to generate predictor and response inputs:
 ```{r, message=FALSE}
-data = data_gen(n_inst=50, covmat_gen(n_pred=60, block_size=5, r_resp=0.5, r_block=0.35))
+data = data_gen_pop_covmat(n_inst=50, covmat_gen(n_pred=60, block_size=5, r_resp=0.5, r_block=0.35))
 ```
 
 We examine the predictor correlation structure; as expected from our `covmat_gen` call, the block of features 1-5 is significantly intra-correlated, while the remaining features appear only weakly (and, in some cases, even  negatively) correlated.
@@ -182,10 +186,10 @@ There may exist outlier instances that may require further examination; we gener
 plot(fit, alpha.index = which.max(fit$model_QF_est), plot.type="measuredVsOOB") 
 ```
 
-Naturally, model performance across `alpha` is strongly dependent on the structure of the input datasets. In the case example above, we purposefully generated a block of informative correlated predictors to highlight the characteristics of less regularized (smaller `alpha`) models and their ability to leverage borrowed information. Let us now generate input datasets with just one prevalent informative predictor: 
+Naturally, model performance across `alpha` is strongly dependent on the structure of the input datasets. In the case example above, we purposefully generated a block of informative correlated predictors to highlight the characteristics of less regularized (smaller `alpha`) models and their ability to leverage borrowed information. Let us now generate input datasets with just one prevalent informative predictor:
 
 ```{r}
-data = data_gen(n_inst=50, covmat_gen(n_pred=60, block_size=1, r_resp=0.7, r_block=0.35))
+data = data_gen_pop_covmat(n_inst=50, covmat_gen(n_pred=60, block_size=1, r_resp=0.7, r_block=0.35))
 ```
 
 As before, we examine the predictor correlation structure:
@@ -245,11 +249,13 @@ We find that, except for features 8, 27 and 14 for ridge regularization (`alpha`
 
 # 4. Datasets <a name="datasets"></a>
 
-The `eNetXplorer` package provides two datasets of biological interest:  
+The `eNetXplorer` package provides three datasets of biological interest:  
 
-* `H1N1_Flow`, comprised of longitudinal cell population frequencies and titer responses upon H1N1 vaccination; and
+* `H1N1_Flow`, comprised of longitudinal cell population frequencies and titer responses upon H1N1 vaccination;
 
-* `Leukemia_miR`, which contains microRNA (miR) expression data from cell lines and primary (patient) samples classified by different acute leukemia phenotypes, as well as normal control samples sorted by cell type. 
+* `Leukemia_miR`, which contains microRNA (miR) expression data from cell lines and primary (patient) samples classified by different acute leukemia phenotypes, as well as normal control samples sorted by cell type; and 
+
+* `breastCancerSurv`, which has survival data and microarray data from a panel of seven genes reported to be associated with breast cancer clinical outcome.
 
 ## 4.1 `H1N1_Flow` <a name="H1N1_Flow"></a>
 
@@ -291,7 +297,117 @@ miR_filtered = Leuk_miR_full$miR_metadata[miR_filter,]
 sample_filtered = Leuk_miR_full$sample_metadata[sample_filter,]
 ```
 
-# 5. Notes on the algorithm's efficiency <a name="efficiency"></a>
+## 4.3 `breastCancerSurv` <a name="breastCancerSurv"></a>
+
+The `breastCancerSurv` dataset consists of gene expression microarray data for a panel of 7 genes and 319 breast cancer patients, for which also survival information is available. A numerical matrix of predictors is provided with samples as rows and genes as columns. The response is a numerical matrix with columns named "time" and "status", where the latter is a binary indicator of death (1) or right-censoring (0). It should be noticed that this exact formatting of the response matrix is required; the function `Surv()` in package `survival` produces such a matrix.
+
+To load the dataset:
+```{r, eval=FALSE}
+data(breastCancerSurv)
+```
+
+# 5. Why is my linear regression slope negative? <a name="slope"></a> 
+
+You may notice that, when running a linear regression model, the correlation between out-of-bag (OOB) predictions and the (true) response values may display a negative slope. This is typically observed when the set of model predictors is not (or is only weakly) informative of the response. For example, running `eNetXplorer` after generating a dataset of 50 instances with 20 predictors whose correlation with the response is exactly zero, the correlation between OOB predictions and the response is:
+
+```{r, echo=FALSE}
+# OR, for our purposes, we upload the object previously generated:
+load("eNet_gaussian_covsam_null.Robj")
+```
+
+```{r, warning=FALSE, tidy=TRUE, fig.height = 4, fig.width = 5.5, fig.align = "left"}
+plot(eNet, alpha.index = which.max(eNet$model_QF_est), plot.type="measuredVsOOB") 
+```
+
+which has a negative slope! Shouldn't the slope be zero? Well, as it turns out, we should expect the slope to be negative because of the phenomenon known as "regression to the mean". The in-bag fit will generally result in a spurious positive slope due to finite-size sampling bias; relative to the OOB data, this spurious trend will thus be negatively correlated. As a very straightforward illustration of this phenomenon, let us consider a step-by-step, simple example of univariate regression. 
+
+First, the following data-generating function will create a set of features correlated with the response according to any arbitrary, pre-defined **sampling** covariance matrix `covmat`:
+
+```{r, message=FALSE}
+data_gen_sampl_covmat <- function(n_inst, covmat) {
+    library (expm)
+    mat <- matrix(rnorm(n_inst*ncol(covmat)),ncol=ncol(covmat))
+    data = mat%*%sqrtm(solve(cov(mat)))%*%sqrtm(covmat)
+    predictor=data[,-1,drop=F]
+    rownames(predictor) = paste0("Inst.",1:n_inst)
+    colnames(predictor) = paste0("Feat.",1:(ncol(covmat)-1))
+    list(response=data[,1],predictor=predictor)
+}
+```
+
+In passing, let us mention that this function requires the number of instances to be larger than the number of variables, whereas `data_gen_pop_covmat` introduced earlier, which generates data based on a pre-defined **population** covariance matrix, does not have this limitation. 
+
+Next, we generate the fold template for cross-validated linear regression:
+```{r, message=FALSE}
+n_inst=50
+n_fold = 5
+foldid = NULL
+fold_size = floor(n_inst/n_fold)
+for (i_fold in 1:n_fold) {
+    foldid = c(foldid,rep(i_fold,fold_size))
+}
+fold_rest = n_inst%%n_fold
+if (fold_rest>0) {
+    for (i_fold in 1:fold_rest) {
+        foldid = c(foldid,i_fold)
+    }
+}
+```
+
+In our next step, we randomly generate `n_run` univariate synthetic datasets; for each of them, the response is designed to have zero correlation with the predictor variable. For each dataset, we perform linear regression for the full dataset, as well as `n_rdm` cross-validated linear regressions. 
+
+```{r, warning=FALSE, message=FALSE}
+n_run = 20
+n_rdm = 10
+set.seed(123)
+cor_data = rep(NA,n_run)
+cor_pred_full = rep(NA,n_run)
+cor_pred_OOB_mean = rep(NA,n_run)
+cor_pred_OOB_sd = rep(NA,n_run)
+covmat=matrix(c(1,0,0,1),ncol=2)
+for (i_run in 1:n_run) {
+    data_gen = data_gen_sampl_covmat(n_inst,covmat)
+    data = data.frame(x=data_gen$predictor[,1],y=data_gen$response)
+    cor_data[i_run] = cor(data$x,data$y)
+    fit = lm("y~x",data)
+    y_pred = predict(fit,data)
+    cor_pred_full[i_run] = cor(data$y,y_pred)
+    # we generate random folds
+    cor_pred_OOB = rep(NA,n_rdm)
+    for (i_rdm in 1:n_rdm) {
+        foldid_rdm = sample(foldid)
+        y_pred_rdm = rep(NA,n_inst)
+        for (i_fold in 1:n_fold) {
+            IB = foldid_rdm!=i_fold
+            fit = lm("y~x",data[IB,])
+            y_pred_rdm[!IB] = predict(fit,data[!IB,])
+        }
+        cor_pred_OOB[i_rdm] = cor(data$y,y_pred_rdm)
+    }
+    cor_pred_OOB_mean[i_run] = mean(cor_pred_OOB)
+    cor_pred_OOB_sd[i_run] = sd(cor_pred_OOB)
+}
+```
+
+Finally, we plot the results. 
+
+```{r, warning=FALSE, tidy=TRUE, fig.height = 4, fig.width = 5.5, fig.align = "left"}
+color = c("black","blue","red")
+x = 1:n_run
+range_y = range(cor_data,cor_pred_full,cor_pred_OOB_mean+cor_pred_OOB_sd,
+                cor_pred_OOB_mean-cor_pred_OOB_sd,na.rm=T)
+plot(range(x),range_y,type="n",xlab="run",ylab="Pearson's correlation",cex.lab=1.)
+lines(x,cor_data,type="b",pch=16,col=color[1],lty=3)
+lines(x,cor_pred_full,type="b",pch=16,col=color[2],lty=3)
+lines(x,cor_pred_OOB_mean,type="b",pch=16,col=color[3],lty=3)
+arrows(x,cor_pred_OOB_mean-cor_pred_OOB_sd,x,cor_pred_OOB_mean+cor_pred_OOB_sd,col=color[3],length=0.025,angle=90,code=3)
+legend_txt = c("cor(y,x)","cor(y,y_pred)","cor(y,y_pred_OOB)")
+legend(11,-0.075,legend_txt,pch=16,lwd=1,col=color,lty=3,cex=0.7,pt.cex=0.7) 
+```
+
+The `x` and `y` variables were designed to have zero correlation; the black plot just serves as a sanity check. As expected, we can't predict `y` from `x`; therefore, the correlation between the predicted `y` and the true `y` is essentially zero (blue plot). However, when using a cross-validation framework, the correlation between the OOB-predicted `y` and the true `y` is distinctly negative (red plot). 
+  
+# 6. Notes on the algorithm's efficiency <a name="efficiency"></a>
 
 `eNetXplorer` has been successfully tested and used on datasets with hundreds and up to 
 1,000+ features. However, the algorithm's efficiency degrades noticeably as the number of features is increased. In order to analyze high-dimensional datasets with thousands or, even, tens of thousands of features (e.g. RNA-Seq), we advise implementing dimensional-reduction preprocessing approaches. Useful strategies, for instance, are: (i) to compute the average (or, alternatively, the first principal component) of gene modules, which may be based on biological annotations (e.g. pathways, Gene Ontology classifications, etc.), previous meta-studies [@cha08; @li14; @wei16] or calculated *de novo* [@lan08]; or (ii) to filter out low-expression genes, then select the most variable genes across the cohort (ranked by variance or mean absolute deviation).
@@ -301,7 +417,38 @@ It should also be noticed that the efficiency of linear regression (Gaussian) an
 Running time is linear on `n_run` (number of runs) and `n_perm_null` (number of random null-model permutations of the response per run). Default values were chosen with the purpose to achieve a balanced tradeoff between speed and statistical accuracy. We suggest running exploratory `eNetXplorer` models with default values (or adjusted as needed to generate relatively quick results), then re-run with more statistics to obtain more accurate estimates. Depending on the size and complexity of the dataset, as well as on the type of generalized linear model and parameters chosen, it is not uncommon to run 
 `eNetXplorer` jobs that could take several hours, or even several days, to complete. Thus, we advise to start small (sacrificing statistical accuracy to shorten running time) and adjust parameters incrementally.
 
-# 6. Summary <a name="summary"></a>
+In addition, it is possible to run `alpha` values in smaller groups, or individually, and merge the resulting `eNetXplorer` objects. See Section on Parallelization below. 
+
+# 7. Parallelization <a name="parallel"></a>
+
+Upon sequential or parallel execution of two or more `eNetXplorer` runs with different values of the mixing parameter `alpha`, and assuming the objects from those runs have been saved, the `mergeObj()` function creates a new `eNetXplorer` object that merges the `alpha` values. It currently supports linear (gaussian), logistic (binomial), and Cox regression models. 
+
+It is possible to significantly optimize running time by executing individual `alpha` runs in parallel, saving individual `eNetXplorer` objects to be later merged at the end of the process. Be warned that, if executed, the code below will create objects in the current directory.
+
+```{r, eval=FALSE}
+library(furrr)
+data(QuickStartEx)
+alpha_values = seq(0,1,by=0.2)
+future::plan(multiprocess) # Set up parallel processing
+eNet = alpha_values %>% furrr::future_map(~ eNetXplorer(
+  x=QuickStartEx$predictor, y=QuickStartEx$response,family="gaussian",
+  n_run=20,n_perm_null=10,save_obj=T,dest_obj=paste0("eNet_a",.x,".Robj"),alpha=.x))
+mergeObj(paste0("eNet_a",alpha_values,".Robj"))
+```
+
+Special thanks to Adam Bartonicek (University of Otago, New Zealand) for contributing this solution.
+
+# 8. Errata <a name="errata"></a>
+
+In Figure 5 of our `eNetXplorer` paper [@can19]: 
+
+* The caption for panels (**b**,**d**) should read "Boxplots showing the fraction of runs in which the prediction agrees with the outcome for a given patient".
+
+* The y-axis for panels (**b**,**d**) should read "frequency of OOB correct predictions". The y-axis label in function `plotMeasuredVsOOB()` for categorical models has been fixed accordingly in version 1.1.0.
+
+Special thanks to John Wiedenh&ouml;ft (Universit&auml;t G&ouml;ttingen, Germany) for pointing out these errors.
+
+# 9. Summary <a name="summary"></a>
 
 * `eNetXplorer` addresses key questions regarding model regularization and feature selection based on permutation-based statistical significance tests. Results are provided in the form of standard plots, summary statistics and output tables. 
 

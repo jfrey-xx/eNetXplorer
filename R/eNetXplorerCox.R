@@ -1,7 +1,8 @@
 # Cox model
 eNetXplorerCox <- function(x, y, family, alpha, nlambda, nlambda.ext, seed, scaled,
-n_fold, n_run, n_perm_null, QF.FUN, QF_label, cox_index, logrank, survAUC, survAUC_time, survAUC_method, survAUC_lambda, survAUC_span, ...)
+n_fold, n_run, n_perm_null, save_lambda_QF_full, QF.FUN, QF_label, cox_index, logrank, survAUC, survAUC_time, ...)
 {
+    
     n_instance = nrow(x)
     n_feature = ncol(x)
     instance = rownames(x)
@@ -64,6 +65,7 @@ n_fold, n_run, n_perm_null, QF.FUN, QF_label, cox_index, logrank, survAUC, survA
     
     lambda_values = vector("list",n_alpha)
     lambda_QF_est = vector("list",n_alpha)
+    lambda_QF_est_full = vector("list",n_alpha)
     
     foldid_per_run = vector("list",n_alpha)
     predicted_values = vector("list",n_alpha)
@@ -90,8 +92,8 @@ n_fold, n_run, n_perm_null, QF.FUN, QF_label, cox_index, logrank, survAUC, survA
     
     # AUC
     if (survAUC) {
-        if ((survAUC_method=="NNE")&is.null(survAUC_span)&is.null(survAUC_lambda)) {
-            survAUC_span = 0.25*n_instance^(-0.20) # default value suggested per "survivalROC" documentation
+        if (!"package:survival"%in%search()) {
+            attachNamespace("survival") # to solve some issues with timeROC
         }
         if (is.null(survAUC_time)) {
             stop("Error: survAUC_time must be provided")
@@ -99,9 +101,9 @@ n_fold, n_run, n_perm_null, QF.FUN, QF_label, cox_index, logrank, survAUC, survA
         n_survAUC_time = length(survAUC_time)
         AUC_mean = matrix(rep(NA,n_survAUC_time*n_alpha),ncol=n_alpha)
         AUC_sd = matrix(rep(NA,n_survAUC_time*n_alpha),ncol=n_alpha)
-        AUC_perc05 = matrix(rep(NA,n_survAUC_time*n_alpha),ncol=n_alpha)
-        AUC_perc50 = matrix(rep(NA,n_survAUC_time*n_alpha),ncol=n_alpha)
-        AUC_perc95 = matrix(rep(NA,n_survAUC_time*n_alpha),ncol=n_alpha)
+        AUC_perc025 = matrix(rep(NA,n_survAUC_time*n_alpha),ncol=n_alpha)
+        AUC_perc500 = matrix(rep(NA,n_survAUC_time*n_alpha),ncol=n_alpha)
+        AUC_perc975 = matrix(rep(NA,n_survAUC_time*n_alpha),ncol=n_alpha)
         AUC_pval = matrix(rep(NA,n_survAUC_time*n_alpha),ncol=n_alpha)
     }
     
@@ -124,6 +126,8 @@ n_fold, n_run, n_perm_null, QF.FUN, QF_label, cox_index, logrank, survAUC, survA
         names(lambda_values) = alpha_label
         lambda_QF_est = lambda_QF_est[1:n_alpha_eff]
         names(lambda_QF_est) = alpha_label
+        lambda_QF_est_full = lambda_QF_est_full[1:n_alpha_eff]
+        names(lambda_QF_est_full) = alpha_label
         feature_coef_wmean = feature_coef_wmean[,1:n_alpha_eff,drop=F]
         rownames(feature_coef_wmean) = feature
         colnames(feature_coef_wmean) = alpha_label
@@ -171,15 +175,15 @@ n_fold, n_run, n_perm_null, QF.FUN, QF_label, cox_index, logrank, survAUC, survA
             AUC_sd = AUC_sd[,1:n_alpha_eff,drop=F]
             rownames(AUC_sd) = survAUC_time
             colnames(AUC_sd) = alpha_label
-            AUC_perc05 = AUC_perc05[,1:n_alpha_eff,drop=F]
-            rownames(AUC_perc05) = survAUC_time
-            colnames(AUC_perc05) = alpha_label
-            AUC_perc50 = AUC_perc50[,1:n_alpha_eff,drop=F]
-            rownames(AUC_perc50) = survAUC_time
-            colnames(AUC_perc50) = alpha_label
-            AUC_perc95 = AUC_perc95[,1:n_alpha_eff,drop=F]
-            rownames(AUC_perc95) = survAUC_time
-            colnames(AUC_perc95) = alpha_label
+            AUC_perc025 = AUC_perc025[,1:n_alpha_eff,drop=F]
+            rownames(AUC_perc025) = survAUC_time
+            colnames(AUC_perc025) = alpha_label
+            AUC_perc500 = AUC_perc500[,1:n_alpha_eff,drop=F]
+            rownames(AUC_perc500) = survAUC_time
+            colnames(AUC_perc500) = alpha_label
+            AUC_perc975 = AUC_perc975[,1:n_alpha_eff,drop=F]
+            rownames(AUC_perc975) = survAUC_time
+            colnames(AUC_perc975) = alpha_label
             AUC_pval = AUC_pval[,1:n_alpha_eff,drop=F]
             rownames(AUC_pval) = survAUC_time
             colnames(AUC_pval) = alpha_label
@@ -190,13 +194,14 @@ n_fold, n_run, n_perm_null, QF.FUN, QF_label, cox_index, logrank, survAUC, survA
         # input data and parameters
         predictor = as(x,"CsparseMatrix"), response = y, alpha = alpha[1:n_alpha_eff], family = family, nlambda = nlambda,
         nlambda.ext = nlambda.ext, seed = seed, scaled = scaled, n_fold = n_fold, n_run = n_run,
-        n_perm_null = n_perm_null, QF_label = QF_label, cox_index = cox_index, logrank = logrank, survAUC = survAUC,
-        survAUC_time = survAUC_time, survAUC_method = survAUC_method, survAUC_lambda = survAUC_lambda, survAUC_span = survAUC_span, 
+        n_perm_null = n_perm_null, save_lambda_QF_full = save_lambda_QF_full,
+        QF_label = QF_label, cox_index = cox_index, logrank = logrank, survAUC = survAUC,
+        survAUC_time = survAUC_time,
         instance = instance, feature = feature, glmnet_params = glmnet.control(),
         # summary results
         best_lambda = best_lambda, model_QF_est = model_QF_est, QF_model_vs_null_pval = QF_model_vs_null_pval,
         # detailed results for plots and downstream analysis
-        lambda_values = lambda_values, lambda_QF_est = lambda_QF_est,
+        lambda_values = lambda_values, lambda_QF_est = lambda_QF_est, lambda_QF_est_full = lambda_QF_est_full,
         predicted_values = predicted_values,
         feature_coef_wmean = as(feature_coef_wmean,"CsparseMatrix"), feature_coef_wsd = as(feature_coef_wsd,"CsparseMatrix"),
         feature_freq_mean = as(feature_freq_mean,"CsparseMatrix"), feature_freq_sd = as(feature_freq_sd,"CsparseMatrix"),
@@ -210,7 +215,7 @@ n_fold, n_run, n_perm_null, QF.FUN, QF_label, cox_index, logrank, survAUC, survA
         }
         if (survAUC) {
             output = append(output, list(
-            AUC_mean = AUC_mean, AUC_sd = AUC_sd, AUC_perc05 = AUC_perc05, AUC_perc50 = AUC_perc50, AUC_perc95 = AUC_perc95, AUC_pval = AUC_pval
+            AUC_mean = AUC_mean, AUC_sd = AUC_sd, AUC_perc025 = AUC_perc025, AUC_perc500 = AUC_perc500, AUC_perc975 = AUC_perc975, AUC_pval = AUC_pval
             ))
         }
         output
@@ -275,6 +280,9 @@ n_fold, n_run, n_perm_null, QF.FUN, QF_label, cox_index, logrank, survAUC, survA
                 }
                 pb$tick()
             }
+            if (save_lambda_QF_full) {
+                lambda_QF_est_full[[i_alpha]] = lambda_QF_est_all_runs
+            }
             lambda_QF_est[[i_alpha]] = apply(lambda_QF_est_all_runs,1,median,na.rm=T)
             best_lambda_index = which.max(lambda_QF_est[[i_alpha]])
             
@@ -318,14 +326,14 @@ n_fold, n_run, n_perm_null, QF.FUN, QF_label, cox_index, logrank, survAUC, survA
                 for (i_survAUC_time in 1:n_survAUC_time) {
                     AUC[[i_survAUC_time]] = rep(NA,n_run)
                     for (i_run in 1:n_run) {
-                        AUC[[i_survAUC_time]][i_run] = survivalROC(Stime=y[,"time"],status=y[,"status"],marker=predicted_values_all_lambda[n_instance*(i_run-1)+(1:n_instance),best_lambda_index],predict.time=survAUC_time[i_survAUC_time],method=survAUC_method,lambda=survAUC_lambda,span=survAUC_span)$AUC
+                        AUC[[i_survAUC_time]][i_run] = as.numeric(timeROC(T=y[,"time"],delta=y[,"status"],cause=1,marker=predicted_values_all_lambda[n_instance*(i_run-1)+(1:n_instance),best_lambda_index],times=survAUC_time[i_survAUC_time],ROC=FALSE)$AUC[2])
                         pb$tick()
                     }
                     AUC_mean[i_survAUC_time,i_alpha] = mean(AUC[[i_survAUC_time]])
                     AUC_sd[i_survAUC_time,i_alpha] = sd(AUC[[i_survAUC_time]])
-                    AUC_perc05[i_survAUC_time,i_alpha] = quantile(AUC[[i_survAUC_time]],probs=0.05)
-                    AUC_perc50[i_survAUC_time,i_alpha] = quantile(AUC[[i_survAUC_time]],probs=0.50)
-                    AUC_perc95[i_survAUC_time,i_alpha] = quantile(AUC[[i_survAUC_time]],probs=0.95)
+                    AUC_perc025[i_survAUC_time,i_alpha] = quantile(AUC[[i_survAUC_time]],probs=0.025)
+                    AUC_perc500[i_survAUC_time,i_alpha] = quantile(AUC[[i_survAUC_time]],probs=0.50)
+                    AUC_perc975[i_survAUC_time,i_alpha] = quantile(AUC[[i_survAUC_time]],probs=0.975)
                 }
             }
             
@@ -368,7 +376,8 @@ n_fold, n_run, n_perm_null, QF.FUN, QF_label, cox_index, logrank, survAUC, survA
                     }
                     if (survAUC) {
                         for (i_survAUC_time in 1:n_survAUC_time) {
-                            AUC_null[[i_survAUC_time]][i_run,i_perm_null] = survivalROC(Stime=y_RDM[,"time"],status=y_RDM[,"status"],marker=null_predicted_values,predict.time=survAUC_time[i_survAUC_time],method=survAUC_method,lambda=survAUC_lambda,span=survAUC_span)$AUC
+                            AUC_null[[i_survAUC_time]][i_run,i_perm_null] =
+                            as.numeric(timeROC(T=y_RDM[,"time"],delta=y_RDM[,"status"],cause=1,marker=null_predicted_values,times=survAUC_time[i_survAUC_time],ROC=FALSE)$AUC[2])
                         }
                     }
                 }

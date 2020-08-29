@@ -1,6 +1,6 @@
 # Multinomial model
 eNetXplorerMultinomial <- function(x, y, family, alpha, nlambda, nlambda.ext, seed, scaled,
-n_fold, n_run, n_perm_null, QF.FUN, QF_label, multinom_method, fscore_beta, fold_distrib_fail.max,...)
+n_fold, n_run, n_perm_null, save_lambda_QF_full, QF.FUN, QF_label, multinom_method, fscore_beta, fold_distrib_fail.max,...)
 {
     n_instance = nrow(x)
     n_feature = ncol(x)
@@ -103,6 +103,7 @@ n_fold, n_run, n_perm_null, QF.FUN, QF_label, multinom_method, fscore_beta, fold
     
     lambda_values = vector("list",n_alpha)
     lambda_QF_est = vector("list",n_alpha)
+    lambda_QF_est_full = vector("list",n_alpha)
     
     foldid_per_run = vector("list",n_alpha)
     predicted_values = vector("list",n_alpha)
@@ -155,6 +156,8 @@ n_fold, n_run, n_perm_null, QF.FUN, QF_label, multinom_method, fscore_beta, fold
         names(lambda_values) = alpha_label
         lambda_QF_est = lambda_QF_est[1:n_alpha_eff]
         names(lambda_QF_est) = alpha_label
+        lambda_QF_est_full = lambda_QF_est_full[1:n_alpha_eff]
+        names(lambda_QF_est_full) = alpha_label
         predicted_values = predicted_values[1:n_alpha_eff]
         names(predicted_values) = alpha_label
         for (i_alpha in 1:n_alpha_eff) {
@@ -208,14 +211,14 @@ n_fold, n_run, n_perm_null, QF.FUN, QF_label, multinom_method, fscore_beta, fold
         # input data and parameters
         predictor = as(x,"CsparseMatrix"), response = y, alpha = alpha[1:n_alpha_eff], family = family, nlambda = nlambda,
         nlambda.ext = nlambda.ext, seed = seed, scaled = scaled, n_fold = n_fold, n_run = n_run,
-        n_perm_null = n_perm_null, QF_label = QF_label,
-        multinom_method = multinom_method,
+        n_perm_null = n_perm_null, save_lambda_QF_full = save_lambda_QF_full,
+        QF_label = QF_label, multinom_method = multinom_method,
         fscore_beta = fscore_beta, instance = instance, feature = feature,
         fold_distrib_fail.max = fold_distrib_fail.max, glmnet_params = glmnet.control(),
         # summary results
         best_lambda = best_lambda, model_QF_est = model_QF_est, QF_model_vs_null_pval = QF_model_vs_null_pval,
         # detailed results for plots and downstream analysis
-        lambda_values = lambda_values, lambda_QF_est = lambda_QF_est,
+        lambda_values = lambda_values, lambda_QF_est = lambda_QF_est, lambda_QF_est_full = lambda_QF_est_full,
         predicted_values = predicted_values,
         feature_coef_wmean = feature_coef_wmean, feature_coef_wsd = feature_coef_wsd,
         feature_freq_mean = feature_freq_mean, feature_freq_sd = feature_freq_sd,
@@ -306,6 +309,9 @@ n_fold, n_run, n_perm_null, QF.FUN, QF_label, multinom_method, fscore_beta, fold
                     }
                 }
                 pb$tick()
+            }
+            if (save_lambda_QF_full) {
+                lambda_QF_est_full[[i_alpha]] = lambda_QF_est_all_runs
             }
             lambda_QF_est[[i_alpha]] = apply(lambda_QF_est_all_runs,1,median,na.rm=T)
             best_lambda_index = which.max(lambda_QF_est[[i_alpha]])

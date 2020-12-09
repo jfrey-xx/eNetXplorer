@@ -1,5 +1,5 @@
 # Gaussian model
-eNetXplorerGaussian <- function(x, y, family, alpha, nlambda, nlambda.ext, seed, scaled,
+eNetXplorerGaussian <- function(x, y, family, alpha, nlambda, nlambda.ext, lambda, seed, scaled,
 n_fold, n_run, n_perm_null, save_lambda_QF_full, QF.FUN, QF_label, cor_method, ...)
 {
     n_instance = nrow(x)
@@ -50,6 +50,8 @@ n_fold, n_run, n_perm_null, save_lambda_QF_full, QF.FUN, QF_label, cor_method, .
             foldid = c(foldid,i_fold)
         }
     }
+    # we will try to hack foldid later on, debug info
+    cat("DEBUG foldid:", foldid,"\n")
     
     n_alpha = length(alpha)
     n_alpha_eff = 0
@@ -138,7 +140,7 @@ n_fold, n_run, n_perm_null, save_lambda_QF_full, QF.FUN, QF_label, cor_method, .
         list(
         # input data and parameters
         predictor = as(x,"CsparseMatrix"), response = y, alpha = alpha[1:n_alpha_eff], family = family, nlambda = nlambda,
-        nlambda.ext = nlambda.ext, seed = seed, scaled = scaled, n_fold = n_fold, n_run = n_run,
+        nlambda.ext = nlambda.ext, lambda=lambda, seed = seed, scaled = scaled, n_fold = n_fold, n_run = n_run,
         n_perm_null = n_perm_null, save_lambda_QF_full = save_lambda_QF_full,
         QF_label = QF_label, cor_method = cor_method, instance = instance,
         feature = feature, glmnet_params = glmnet.control(),
@@ -164,9 +166,12 @@ n_fold, n_run, n_perm_null, save_lambda_QF_full, QF.FUN, QF_label, cor_method, .
                 lambda_max = fit$lambda[1]*sqrt(nlambda.ext/length(fit$lambda))
                 lambda_min = fit$lambda[length(fit$lambda)]/sqrt(nlambda.ext/length(fit$lambda))
                 lambda_values[[i_alpha]] = lambda_max*(lambda_min/lambda_max)**(((1:nlambda.ext)-1)/(nlambda.ext-1))
+            } else if (!is.null(lambda)) {
+                lambda_values[[i_alpha]] = sort(c(fit$lambda, lambda))
             } else {
                 lambda_values[[i_alpha]] = fit$lambda
             }
+            
             n_lambda = length(lambda_values[[i_alpha]])
             predicted_values_all_lambda = matrix(rep(NA,n_instance*n_run*n_lambda),ncol=n_lambda)
             feature_coef_per_lambda = vector("list",n_lambda)

@@ -1,5 +1,5 @@
 eNetXplorer <- function(x, y, family=c("gaussian","binomial","multinomial","cox"),
-    alpha=seq(0,1,by=0.2), nlambda=100, nlambda.ext=NULL,
+    alpha=seq(0,1,by=0.2), nlambda=100, nlambda.ext=NULL, lambda=NULL,
     seed=NULL, scaled=TRUE, n_fold=5, n_run=100, n_perm_null=25,
     save_obj=FALSE, dest_dir=getwd(), dest_dir_create=TRUE, dest_dir_create_recur=FALSE, dest_obj="eNet.Robj",
     save_lambda_QF_full=FALSE,
@@ -17,7 +17,7 @@ eNetXplorer <- function(x, y, family=c("gaussian","binomial","multinomial","cox"
     }
     family = match.arg(family)
     if (family=="gaussian") {
-        eNet <- eNetXplorerGaussian(x=x, y=y, family=family, alpha=alpha, nlambda=nlambda, nlambda.ext=nlambda.ext,seed=seed, scaled=scaled, n_fold=n_fold, n_run=n_run,
+        eNet <- eNetXplorerGaussian(x=x, y=y, family=family, alpha=alpha, nlambda=nlambda, nlambda.ext=nlambda.ext, lambda=lambda, seed=seed, scaled=scaled, n_fold=n_fold, n_run=n_run,
         n_perm_null=n_perm_null, save_lambda_QF_full=save_lambda_QF_full, QF.FUN=QF.FUN, QF_label=QF_label, cor_method=match.arg(cor_method), ...)
     } else if (family=="binomial") {
         eNet <- eNetXplorerBinomial(x=x, y=y, family=family, alpha=alpha, nlambda=nlambda, nlambda.ext=nlambda.ext, seed=seed, scaled=scaled, n_fold=n_fold, n_run=n_run,

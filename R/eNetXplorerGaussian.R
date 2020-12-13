@@ -52,7 +52,8 @@ n_fold, n_run, n_perm_null, save_lambda_QF_full, QF.FUN, QF_label, cor_method, .
     }
     # we will try to hack foldid later on, debug info
     cat("DEBUG foldid:", foldid,"\n")
-    
+    cat("DEBUG length foldid:", length(foldid),"\n")
+
     n_alpha = length(alpha)
     n_alpha_eff = 0
     best_lambda = rep(NA,n_alpha)
@@ -167,7 +168,7 @@ n_fold, n_run, n_perm_null, save_lambda_QF_full, QF.FUN, QF_label, cor_method, .
                 lambda_min = fit$lambda[length(fit$lambda)]/sqrt(nlambda.ext/length(fit$lambda))
                 lambda_values[[i_alpha]] = lambda_max*(lambda_min/lambda_max)**(((1:nlambda.ext)-1)/(nlambda.ext-1))
             } else if (!is.null(lambda)) {
-                lambda_values[[i_alpha]] = sort(c(fit$lambda, lambda))
+                lambda_values[[i_alpha]] = c(lambda)
             } else {
                 lambda_values[[i_alpha]] = fit$lambda
             }

@@ -1,6 +1,6 @@
 # Gaussian model
 eNetXplorerGaussian <- function(x, y, family, alpha, nlambda, nlambda.ext, lambda, seed, scaled,
-n_fold, n_run, n_perm_null, save_lambda_QF_full, QF.FUN, QF_label, cor_method, ...)
+n_fold, foldid, n_run, n_perm_null, save_lambda_QF_full, QF.FUN, QF_label, cor_method, ...)
 {
     n_instance = nrow(x)
     n_feature = ncol(x)
@@ -39,21 +39,21 @@ n_fold, n_run, n_perm_null, save_lambda_QF_full, QF.FUN, QF_label, cor_method, .
         }
     }
     
-    foldid = NULL # we determine the fold template
-    fold_size = floor(n_instance/n_fold)
-    for (i_fold in 1:n_fold) {
-        foldid = c(foldid,rep(i_fold,fold_size))
-    }
-    fold_rest = n_instance%%n_fold
-    if (fold_rest>0) {
-        for (i_fold in 1:fold_rest) {
-            foldid = c(foldid,i_fold)
+    # if option not set, compute foldid vector
+    if (is.null(foldid)) {
+        foldid = NULL # we determine the fold template
+        fold_size = floor(n_instance/n_fold)
+        for (i_fold in 1:n_fold) {
+            foldid = c(foldid,rep(i_fold,fold_size))
+        }
+        fold_rest = n_instance%%n_fold
+        if (fold_rest>0) {
+            for (i_fold in 1:fold_rest) {
+                foldid = c(foldid,i_fold)
+            }
         }
     }
-    # we will try to hack foldid later on, debug info
-    cat("DEBUG foldid:", foldid,"\n")
-    cat("DEBUG length foldid:", length(foldid),"\n")
-
+    
     n_alpha = length(alpha)
     n_alpha_eff = 0
     best_lambda = rep(NA,n_alpha)
@@ -141,7 +141,7 @@ n_fold, n_run, n_perm_null, save_lambda_QF_full, QF.FUN, QF_label, cor_method, .
         list(
         # input data and parameters
         predictor = as(x,"CsparseMatrix"), response = y, alpha = alpha[1:n_alpha_eff], family = family, nlambda = nlambda,
-        nlambda.ext = nlambda.ext, lambda=lambda, seed = seed, scaled = scaled, n_fold = n_fold, n_run = n_run,
+        nlambda.ext = nlambda.ext, lambda=lambda, seed = seed, scaled = scaled, n_fold = n_fold, foldid = foldid, n_run = n_run,
         n_perm_null = n_perm_null, save_lambda_QF_full = save_lambda_QF_full,
         QF_label = QF_label, cor_method = cor_method, instance = instance,
         feature = feature, glmnet_params = glmnet.control(),

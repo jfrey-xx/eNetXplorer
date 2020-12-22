@@ -1,16 +1,27 @@
 # Gaussian model
 eNetXplorerGaussian <- function(x, y, family, alpha, nlambda, nlambda.ext, lambda, seed, scaled,
-n_fold, foldid, n_run, n_perm_null, save_lambda_QF_full, QF.FUN, QF_label, cor_method, ...)
+n_fold, foldid, n_run, n_perm_null, save_lambda_QF_full, QF.FUN, QF_label, cor_method, keep_intercept, sample_foldid, glmnet_standardize, ...)
 {
     n_instance = nrow(x)
-    n_feature = ncol(x)
+    if(!keep_intercept) {
+        n_feature = ncol(x)
+        feature = colnames(x)
+    } else {
+        n_feature = ncol(x)+1
+        feature = c("Incercept", colnames(x))
+    }
+    if (is.null(feature)) {
+        if(!keep_intercept) {
+            feature = paste0("Feat.",1:ncol(x))
+        } else {
+            feature = c("Feat.Intercept", paste0("Feat.",1:ncol(x)))
+        }
+    }   
+    
+
     instance = rownames(x)
     if (is.null(instance)) {
         instance = paste0("Inst.",1:nrow(x))
-    }
-    feature = colnames(x)
-    if (is.null(feature)) {
-        feature = paste0("Feat.",1:ncol(x))
     }
     prediction_type = "link"
     
@@ -86,7 +97,10 @@ n_fold, foldid, n_run, n_perm_null, save_lambda_QF_full, QF.FUN, QF_label, cor_m
     # return object
     return_obj <- function(n_alpha_eff) {
         rownames(x) = instance
-        colnames(x) = feature
+        # due to discrepency in columns if we keep intercept, discard auto-gerenated column names
+        if (!keep_intercept) {
+            colnames(x) = feature
+        }
         names(y) = instance
         alpha_label = paste0("a",alpha[1:n_alpha_eff])
         best_lambda = best_lambda[1:n_alpha_eff]
@@ -161,7 +175,7 @@ n_fold, foldid, n_run, n_perm_null, save_lambda_QF_full, QF.FUN, QF_label, cor_m
 
     tryCatch({
         for (i_alpha in 1:n_alpha) { # beginning of alpha loop
-            fit = glmnet(x,y,alpha=alpha[i_alpha],family=family,nlambda=nlambda)
+            fit = glmnet(x,y,alpha=alpha[i_alpha],family=family,nlambda=nlambda, stardardize=glmnet_standardize)
             # We extend the range of lambda values (if nlambda.ext is set)
             if (!is.null(nlambda.ext)&&nlambda.ext>nlambda) {
                 lambda_max = fit$lambda[1]*sqrt(nlambda.ext/length(fit$lambda))
@@ -186,18 +200,27 @@ n_fold, foldid, n_run, n_perm_null, save_lambda_QF_full, QF.FUN, QF_label, cor_m
             format = paste0("  running MODEL for alpha = ",alpha[i_alpha]," [:bar] :percent in :elapsed"),
             total = n_run, clear = T, width= 60)
             for (i_run in 1:n_run) {
-                foldid_per_run[[i_alpha]][,i_run] = sample(foldid)
+                # shuffle foldid vector
+                if (sample_foldid) {
+                    foldid_per_run[[i_alpha]][,i_run] = sample(foldid)
+                } else {
+                    foldid_per_run[[i_alpha]][,i_run] = foldid
+                }
                 feature_coef_per_run = vector("list",n_lambda)
                 for (i_lambda in 1:n_lambda) {
                     feature_coef_per_run[[i_lambda]] = matrix(rep(NA,n_feature*n_fold),ncol=n_fold)
                 }
                 for (i_fold in 1:n_fold) {
                     instance_in_bag = foldid_per_run[[i_alpha]][,i_run]!=i_fold
-                    fit = glmnet(x[instance_in_bag,],y[instance_in_bag],alpha=alpha[i_alpha],family=family,lambda=lambda_values[[i_alpha]])
+                    fit = glmnet(x[instance_in_bag,],y[instance_in_bag],alpha=alpha[i_alpha],family=family,lambda=lambda_values[[i_alpha]], stardardize=glmnet_standardize)
                     n_lambda_eff = length(fit$lambda) # n_lambda_eff may be smaller than n_lambda
                     predicted_values_all_lambda[n_instance*(i_run-1)+which(!instance_in_bag),1:n_lambda_eff] = predict(fit, x[!instance_in_bag,], type=prediction_type)
                     for (i_lambda in 1:n_lambda_eff) {
-                        feature_coef_per_run[[i_lambda]][,i_fold] = coef(fit)[-1,][,i_lambda] # we remove the intercept
+                        if (!keep_intercept) {
+                            feature_coef_per_run[[i_lambda]][,i_fold] = coef(fit)[-1,][,i_lambda] # we remove the intercept
+                        } else {
+                            feature_coef_per_run[[i_lambda]][,i_fold] = coef(fit)[,][,i_lambda]
+                        }
                     }
                 }
                 for (i_lambda in 1:n_lambda) {
@@ -259,9 +282,13 @@ n_fold, foldid, n_run, n_perm_null, save_lambda_QF_full, QF.FUN, QF_label, cor_m
                     null_feature_coef_per_run = matrix(rep(NA,n_feature*n_fold),ncol=n_fold)
                     for (i_fold in 1:n_fold) {
                         instance_in_bag = foldid_per_run[[i_alpha]][,i_run]!=i_fold
-                        fit = glmnet(x[instance_in_bag,],y_RDM[instance_in_bag],alpha=alpha[i_alpha],family=family,lambda=lambda_values[[i_alpha]][best_lambda_index])
+                        fit = glmnet(x[instance_in_bag,],y_RDM[instance_in_bag],alpha=alpha[i_alpha],family=family,lambda=lambda_values[[i_alpha]][best_lambda_index],stardardize=glmnet_standardize)
                         null_predicted_values[which(!instance_in_bag)] = predict(fit, x[!instance_in_bag,], s=lambda_values[[i_alpha]][best_lambda_index], type=prediction_type)
-                        null_feature_coef_per_run[,i_fold] = coef(fit)[-1,] # we remove the intercept
+                        if (!keep_intercept) {
+                            null_feature_coef_per_run[,i_fold] = coef(fit)[-1,] # we remove the intercept
+                        } else {
+                            null_feature_coef_per_run[,i_fold] = coef(fit)[,1] # "flat out" the only dimension we got
+                        }
                     }
                     null_QF_est_all_runs[i_run,i_perm_null] = QF(null_predicted_values,y_RDM)
                     is.na(null_feature_coef_per_run) <- null_feature_coef_per_run == 0
@@ -306,7 +333,9 @@ n_fold, foldid, n_run, n_perm_null, save_lambda_QF_full, QF.FUN, QF_label, cor_m
         } # end of alpha loop
         return_obj(n_alpha_eff)
     }, error = function(e) {
-        cat("Error during execution of alpha = ",alpha[i_alpha],"\n")
+        cat("Error during execution of alpha = ",alpha[i_alpha],":")
+        print(e)
+        cat("\n")
         if (n_alpha_eff>0) {
             return_obj(n_alpha_eff)
         }

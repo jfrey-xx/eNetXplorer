@@ -175,7 +175,7 @@ n_fold, foldid, n_run, n_perm_null, save_lambda_QF_full, QF.FUN, QF_label, cor_m
 
     tryCatch({
         for (i_alpha in 1:n_alpha) { # beginning of alpha loop
-            fit = glmnet(x,y,alpha=alpha[i_alpha],family=family,nlambda=nlambda, stardardize=glmnet_standardize)
+            fit = glmnet(x,y,alpha=alpha[i_alpha],family=family,nlambda=nlambda, standardize=glmnet_standardize)
             # We extend the range of lambda values (if nlambda.ext is set)
             if (!is.null(nlambda.ext)&&nlambda.ext>nlambda) {
                 lambda_max = fit$lambda[1]*sqrt(nlambda.ext/length(fit$lambda))
@@ -212,7 +212,7 @@ n_fold, foldid, n_run, n_perm_null, save_lambda_QF_full, QF.FUN, QF_label, cor_m
                 }
                 for (i_fold in 1:n_fold) {
                     instance_in_bag = foldid_per_run[[i_alpha]][,i_run]!=i_fold
-                    fit = glmnet(x[instance_in_bag,],y[instance_in_bag],alpha=alpha[i_alpha],family=family,lambda=lambda_values[[i_alpha]], stardardize=glmnet_standardize)
+                    fit = glmnet(x[instance_in_bag,],y[instance_in_bag],alpha=alpha[i_alpha],family=family,lambda=lambda_values[[i_alpha]], standardize=glmnet_standardize)
                     n_lambda_eff = length(fit$lambda) # n_lambda_eff may be smaller than n_lambda
                     predicted_values_all_lambda[n_instance*(i_run-1)+which(!instance_in_bag),1:n_lambda_eff] = predict(fit, x[!instance_in_bag,], type=prediction_type)
                     for (i_lambda in 1:n_lambda_eff) {
@@ -282,7 +282,7 @@ n_fold, foldid, n_run, n_perm_null, save_lambda_QF_full, QF.FUN, QF_label, cor_m
                     null_feature_coef_per_run = matrix(rep(NA,n_feature*n_fold),ncol=n_fold)
                     for (i_fold in 1:n_fold) {
                         instance_in_bag = foldid_per_run[[i_alpha]][,i_run]!=i_fold
-                        fit = glmnet(x[instance_in_bag,],y_RDM[instance_in_bag],alpha=alpha[i_alpha],family=family,lambda=lambda_values[[i_alpha]][best_lambda_index],stardardize=glmnet_standardize)
+                        fit = glmnet(x[instance_in_bag,],y_RDM[instance_in_bag],alpha=alpha[i_alpha],family=family,lambda=lambda_values[[i_alpha]][best_lambda_index],standardize=glmnet_standardize)
                         null_predicted_values[which(!instance_in_bag)] = predict(fit, x[!instance_in_bag,], s=lambda_values[[i_alpha]][best_lambda_index], type=prediction_type)
                         if (!keep_intercept) {
                             null_feature_coef_per_run[,i_fold] = coef(fit)[-1,] # we remove the intercept
